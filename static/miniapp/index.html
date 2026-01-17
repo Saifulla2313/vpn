@@ -1216,7 +1216,7 @@
                 </div>
 
                 <!-- Devices Section -->
-                <div id="devices-section" class="devices-section hidden">
+                <div id="devices-section" class="devices-section">
                     <div class="devices-card" onclick="openDevicesModal()">
                         <div class="devices-icon">
                             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
@@ -2101,8 +2101,10 @@
 
             async function updateDevicesSection() {
                 const telegramId = getTelegramId();
+                const countEl = document.getElementById('devices-count');
+                
                 if (!telegramId || !userData?.remnawave_uuid) {
-                    document.getElementById('devices-section').classList.add('hidden');
+                    countEl.textContent = 'Нет устройств';
                     return;
                 }
                 
@@ -2111,14 +2113,14 @@
                     if (response.ok) {
                         const data = await response.json();
                         const count = data.total || 0;
-                        document.getElementById('devices-count').textContent = 
+                        countEl.textContent = 
                             count === 0 ? 'Нет устройств' :
                             count === 1 ? '1 устройство' :
                             count < 5 ? `${count} устройства` : `${count} устройств`;
-                        document.getElementById('devices-section').classList.remove('hidden');
                     }
                 } catch (error) {
                     console.error('Error loading devices count:', error);
+                    countEl.textContent = 'Нет устройств';
                 }
             }
 
