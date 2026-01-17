@@ -733,6 +733,150 @@
                 color: var(--tg-theme-hint-color);
             }
 
+            /* Installation Section */
+            .install-section {
+                margin-top: 20px;
+                animation: fadeInUp 0.6s ease 0.5s both;
+            }
+
+            .section-title {
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 16px;
+                color: var(--tg-theme-text-color);
+            }
+
+            .platform-selector {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            .platform-btn {
+                flex: 1;
+                padding: 10px 16px;
+                background: var(--glass);
+                border: 1px solid var(--card-border);
+                border-radius: 10px;
+                color: var(--tg-theme-hint-color);
+                font-family: inherit;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .platform-btn.active {
+                background: var(--accent);
+                color: #000;
+                border-color: var(--accent);
+            }
+
+            .install-card {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 16px;
+                padding: 20px;
+                backdrop-filter: blur(20px);
+            }
+
+            .step {
+                display: flex;
+                gap: 14px;
+                margin-bottom: 20px;
+            }
+
+            .step:last-child {
+                margin-bottom: 0;
+            }
+
+            .step-number {
+                width: 28px;
+                height: 28px;
+                min-width: 28px;
+                background: var(--accent);
+                color: #000;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                font-weight: 600;
+            }
+
+            .step-content {
+                flex: 1;
+            }
+
+            .step-content p {
+                font-size: 14px;
+                line-height: 1.5;
+                color: var(--tg-theme-text-color);
+                margin-bottom: 12px;
+            }
+
+            .step-content p strong {
+                color: var(--accent);
+            }
+
+            .download-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #ff6b35, #f7931e);
+                color: #fff;
+                border: none;
+                border-radius: 10px;
+                font-family: inherit;
+                font-size: 14px;
+                font-weight: 600;
+                text-decoration: none;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .download-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+            }
+
+            .key-box {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 14px 16px;
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid var(--card-border);
+                border-radius: 10px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                overflow: hidden;
+            }
+
+            .key-box:hover {
+                border-color: var(--accent);
+                background: rgba(0, 212, 170, 0.1);
+            }
+
+            .key-box:active {
+                transform: scale(0.98);
+            }
+
+            .key-box svg {
+                color: var(--accent);
+                min-width: 16px;
+            }
+
+            .key-box span {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 13px;
+                color: var(--tg-theme-text-color);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
             /* Hidden */
             .hidden {
                 display: none !important;
@@ -889,6 +1033,54 @@
                                 <svg viewBox="0 0 24 24">
                                     <polyline points="9 18 15 12 9 6" />
                                 </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Installation Section -->
+                <div id="install-section" class="install-section hidden">
+                    <div class="section-title">Установка и подключение</div>
+                    
+                    <div class="platform-selector">
+                        <button class="platform-btn active" data-platform="ios" onclick="selectPlatform('ios')">iOS</button>
+                        <button class="platform-btn" data-platform="android" onclick="selectPlatform('android')">Android</button>
+                    </div>
+
+                    <div class="install-card">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <p>Скачайте приложение <strong id="app-name">Happ</strong> и установите его на ваше устройство</p>
+                                <a id="download-btn" href="#" class="download-btn" target="_blank">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7 10 12 15 17 10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                    Скачать
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <p>Скопируйте VPN ключ, нажав на него</p>
+                                <div id="vpn-key-box" class="key-box" onclick="copyVpnKey()">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                    <span id="vpn-key-display">Ключ недоступен</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <p>Вставьте ключ в приложение, дождитесь загрузки конфигурации и включите VPN</p>
                             </div>
                         </div>
                     </div>
@@ -1090,43 +1282,40 @@
                 const daysLeft = document.getElementById("days-left");
                 const dailyPrice = document.getElementById("daily-price");
 
+                const price = userData.subscription?.daily_price || 6;
+                dailyPrice.textContent = `${price}₽`;
+                
+                // Calculate days from balance
+                const balanceDays = Math.floor(userData.balance / price);
+
                 if (userData.subscription) {
                     const sub = userData.subscription;
-                    dailyPrice.textContent = `${sub.daily_price}₽`;
 
                     if (sub.status === "active") {
                         statusBadge.className = "status-badge active";
                         statusBadge.innerHTML =
                             '<div class="status-dot"></div><span>Активна</span>';
-
-                        if (sub.expires_at) {
-                            const expires = new Date(sub.expires_at);
-                            const now = new Date();
-                            const diffDays = Math.ceil(
-                                (expires - now) / (1000 * 60 * 60 * 24),
-                            );
-                            daysLeft.textContent = Math.max(0, diffDays);
-                        } else {
-                            daysLeft.textContent = sub.days_paid || 0;
-                        }
+                        daysLeft.textContent = balanceDays;
                     } else if (sub.status === "trial") {
                         statusBadge.className = "status-badge trial";
                         statusBadge.innerHTML =
                             '<div class="status-dot"></div><span>Пробный период</span>';
-                        daysLeft.textContent = "1";
+                        daysLeft.textContent = balanceDays > 0 ? balanceDays : "1";
                     } else {
                         statusBadge.className = "status-badge inactive";
                         statusBadge.innerHTML =
                             '<div class="status-dot"></div><span>Неактивна</span>';
-                        daysLeft.textContent = "0";
+                        daysLeft.textContent = balanceDays;
                     }
                 } else {
                     statusBadge.className = "status-badge inactive";
                     statusBadge.innerHTML =
                         '<div class="status-dot"></div><span>Неактивна</span>';
-                    daysLeft.textContent = "0";
-                    dailyPrice.textContent = "6₽";
+                    daysLeft.textContent = balanceDays;
                 }
+                
+                // Update installation section
+                updateInstallSection();
             }
 
             // Modal functions
@@ -1309,6 +1498,76 @@
                 if (tg) {
                     tg.HapticFeedback?.impactOccurred("light");
                     tg.openTelegramLink("https://t.me/harleyvpn_support");
+                }
+            }
+
+            // Installation section functions
+            let currentPlatform = 'ios';
+            let vpnKey = null;
+            
+            const appLinks = {
+                ios: 'https://apps.apple.com/app/happ/id6474552484',
+                android: 'https://play.google.com/store/apps/details?id=app.happ.client'
+            };
+            
+            const appNames = {
+                ios: 'Happ',
+                android: 'Happ'
+            };
+
+            function selectPlatform(platform) {
+                currentPlatform = platform;
+                document.querySelectorAll('.platform-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.platform === platform);
+                });
+                document.getElementById('app-name').textContent = appNames[platform];
+                document.getElementById('download-btn').href = appLinks[platform];
+                if (tg) tg.HapticFeedback?.selectionChanged();
+            }
+
+            async function loadVpnKey() {
+                if (!userData || !userData.telegram_id) return;
+                
+                try {
+                    const response = await fetch(`/api/subscription/key/${userData.telegram_id}`);
+                    const data = await response.json();
+                    
+                    if (data.key) {
+                        vpnKey = data.key;
+                        const displayKey = data.key.length > 35 ? data.key.substring(0, 35) + '...' : data.key;
+                        document.getElementById('vpn-key-display').textContent = displayKey;
+                    }
+                } catch (error) {
+                    console.error('Error loading VPN key:', error);
+                }
+            }
+
+            function copyVpnKey() {
+                if (!vpnKey) {
+                    if (tg) tg.showAlert('Ключ недоступен');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(vpnKey).then(() => {
+                    if (tg) {
+                        tg.HapticFeedback?.notificationOccurred('success');
+                        tg.showAlert('✅ Ключ скопирован!');
+                    } else {
+                        alert('Ключ скопирован!');
+                    }
+                }).catch(() => {
+                    if (tg) tg.showAlert('Ошибка копирования');
+                });
+            }
+
+            function updateInstallSection() {
+                const installSection = document.getElementById('install-section');
+                if (userData && userData.subscription && 
+                    (userData.subscription.status === 'active' || userData.subscription.status === 'trial')) {
+                    installSection.classList.remove('hidden');
+                    loadVpnKey();
+                } else {
+                    installSection.classList.add('hidden');
                 }
             }
 
