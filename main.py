@@ -332,7 +332,7 @@ async def get_subscription_key(telegram_id: int):
             return JSONResponse({"error": "VPN key not configured"}, status_code=400)
         
         try:
-            api = RemnaWaveAPI()
+            api = RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY)
             remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
             
             if remnawave_user and remnawave_user.subscription_url:
