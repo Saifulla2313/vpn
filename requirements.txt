@@ -17,3 +17,5 @@ pydantic-settings
 python-dotenv
 sqlalchemy
 uvicorn
+httpx
+yookassa

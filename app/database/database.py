@@ -1,12 +1,23 @@
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from app.config import settings
 
-DATABASE_URL = settings.DATABASE_URL
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
-elif DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+def prepare_database_url(url: str) -> str:
+    if not url:
+        return url
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    parsed = urlparse(url)
+    query_params = parse_qs(parsed.query)
+    query_params.pop('sslmode', None)
+    new_query = urlencode(query_params, doseq=True)
+    new_parsed = parsed._replace(query=new_query)
+    return urlunparse(new_parsed)
+
+DATABASE_URL = prepare_database_url(settings.DATABASE_URL)
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
