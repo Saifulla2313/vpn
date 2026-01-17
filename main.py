@@ -210,6 +210,8 @@ async def yookassa_webhook(request: Request):
     from app.database.crud.transaction import get_transaction_by_payment_id, complete_transaction
     from app.database.crud.subscription import get_subscription_by_user_id, activate_subscription
     from app.database.models import SubscriptionStatus
+    from app.remnawave_api import RemnaWaveAPI
+    from datetime import timedelta
     
     try:
         data = await request.json()
@@ -236,21 +238,62 @@ async def yookassa_webhook(request: Request):
             await complete_transaction(db, transaction.id)
             user = await update_user_balance(db, transaction.user_id, transaction.amount)
             
-            if user:
+            days_added = 0
+            if user and user.remnawave_uuid and user.balance > 0:
+                try:
+                    async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
+                        remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
+                        if remnawave_user:
+                            device_count = remnawave_user.hwid_device_limit or 1
+                            daily_price = settings.SUBSCRIPTION_DAILY_PRICE * device_count
+                            
+                            days_to_add = int(user.balance // daily_price)
+                            if days_to_add > 0:
+                                cost = days_to_add * daily_price
+                                
+                                current_expire = remnawave_user.expire_at
+                                now = datetime.utcnow()
+                                if current_expire and current_expire.tzinfo:
+                                    current_expire = current_expire.replace(tzinfo=None)
+                                
+                                if current_expire and current_expire > now:
+                                    new_expire = current_expire + timedelta(days=days_to_add)
+                                else:
+                                    new_expire = now + timedelta(days=days_to_add)
+                                
+                                await api.update_user(
+                                    uuid=user.remnawave_uuid,
+                                    expire_at=new_expire
+                                )
+                                
+                                await update_user_balance(db, user.id, -cost)
+                                days_added = days_to_add
+                                logger.info(f"Extended subscription for user {user.telegram_id}: +{days_to_add} days, -{cost}₽")
+                except Exception as e:
+                    logger.error(f"Failed to auto-extend subscription: {e}")
+            
+            if user and not user.remnawave_uuid:
                 subscription = await get_subscription_by_user_id(db, user.id)
                 if subscription and subscription.status != SubscriptionStatus.ACTIVE:
                     if user.balance >= settings.SUBSCRIPTION_DAILY_PRICE:
                         days = int(user.balance // settings.SUBSCRIPTION_DAILY_PRICE)
                         await activate_subscription(db, user.id, days)
-                
-                if bot:
-                    try:
+            
+            if user and bot:
+                try:
+                    if days_added > 0:
+                        await bot.send_message(
+                            user.telegram_id,
+                            f"✅ Оплата {transaction.amount}₽ получена!\n"
+                            f"Подписка продлена на {days_added} дней"
+                        )
+                    else:
                         await bot.send_message(
                             user.telegram_id,
                             f"✅ Оплата {transaction.amount}₽ получена!\nВаш баланс: {user.balance}₽"
                         )
-                    except Exception as e:
-                        logger.error(f"Failed to notify user: {e}")
+                except Exception as e:
+                    logger.error(f"Failed to notify user: {e}")
         
         return {"status": "ok"}
     
