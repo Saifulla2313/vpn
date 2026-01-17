@@ -347,6 +347,70 @@ async def create_payment_api(request: Request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+@app.get("/api/devices/{telegram_id}")
+async def get_user_devices(telegram_id: int):
+    """Get connected devices for miniapp"""
+    from app.database.crud.user import get_user_by_telegram_id
+    from app.remnawave_api import RemnaWaveAPI
+    
+    async with AsyncSessionLocal() as db:
+        user = await get_user_by_telegram_id(db, telegram_id)
+        if not user:
+            return JSONResponse({"error": "User not found"}, status_code=404)
+        
+        if not user.remnawave_uuid:
+            return {"devices": [], "total": 0}
+        
+        try:
+            async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
+                devices_info = await api.get_user_devices(user.remnawave_uuid)
+                devices = devices_info.get('devices', [])
+                
+                formatted_devices = []
+                for device in devices:
+                    formatted_devices.append({
+                        "hwid": device.get('hwid', ''),
+                        "user_agent": device.get('userAgent', device.get('user_agent', '')),
+                        "added_at": device.get('addedAt', device.get('added_at', '')),
+                        "online_at": device.get('onlineAt', device.get('online_at', ''))
+                    })
+                
+                return {
+                    "devices": formatted_devices,
+                    "total": len(formatted_devices),
+                    "price_per_device": settings.SUBSCRIPTION_DAILY_PRICE
+                }
+        except Exception as e:
+            logger.error(f"Error fetching devices: {e}")
+            return {"devices": [], "total": 0, "error": str(e)}
+
+
+@app.delete("/api/devices/{telegram_id}/{device_hwid}")
+async def remove_user_device(telegram_id: int, device_hwid: str):
+    """Remove a device"""
+    from app.database.crud.user import get_user_by_telegram_id
+    from app.remnawave_api import RemnaWaveAPI
+    
+    async with AsyncSessionLocal() as db:
+        user = await get_user_by_telegram_id(db, telegram_id)
+        if not user:
+            return JSONResponse({"error": "User not found"}, status_code=404)
+        
+        if not user.remnawave_uuid:
+            return JSONResponse({"error": "No VPN account"}, status_code=400)
+        
+        try:
+            async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
+                success = await api.remove_device(user.remnawave_uuid, device_hwid)
+                if success:
+                    return {"status": "ok", "message": "Device removed"}
+                else:
+                    return JSONResponse({"error": "Failed to remove device"}, status_code=500)
+        except Exception as e:
+            logger.error(f"Error removing device: {e}")
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+
 @app.get("/api/subscription/key/{telegram_id}")
 async def get_subscription_key(telegram_id: int):
     """Get VPN subscription key for miniapp"""
