@@ -8,14 +8,4 @@ python-dotenv>=1.0.0
 pydantic>=2.4.1,<2.6
 pydantic-settings>=2.1.0
 httpx>=0.27.0
-aiogram
-aiohttp
-asyncpg
-fastapi
-pydantic
-pydantic-settings
-python-dotenv
-sqlalchemy
-uvicorn
-httpx
-yookassa
+yookassa>=3.2.0
