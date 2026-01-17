@@ -1448,36 +1448,37 @@
                 const daysLeft = document.getElementById("days-left");
                 const dailyPrice = document.getElementById("daily-price");
 
-                const price = userData.subscription?.daily_price || 6;
-                dailyPrice.textContent = `${price}₽`;
+                const sub = userData.subscription;
+                const price = sub?.daily_price || 6;
+                const deviceCount = sub?.device_count || 1;
+                const pricePerDevice = sub?.price_per_device || 6;
                 
-                // Calculate days from balance
-                const balanceDays = Math.floor(userData.balance / price);
+                dailyPrice.textContent = deviceCount > 1 ? `${price}₽ (${deviceCount} уст.)` : `${price}₽`;
 
-                if (userData.subscription) {
-                    const sub = userData.subscription;
+                if (sub) {
+                    const subDaysLeft = sub.days_left || 0;
 
                     if (sub.status === "active") {
                         statusBadge.className = "status-badge active";
                         statusBadge.innerHTML =
                             '<div class="status-dot"></div><span>Активна</span>';
-                        daysLeft.textContent = balanceDays;
+                        daysLeft.textContent = subDaysLeft;
                     } else if (sub.status === "trial") {
                         statusBadge.className = "status-badge trial";
                         statusBadge.innerHTML =
                             '<div class="status-dot"></div><span>Пробный период</span>';
-                        daysLeft.textContent = balanceDays > 0 ? balanceDays : "1";
+                        daysLeft.textContent = subDaysLeft > 0 ? subDaysLeft : "1";
                     } else {
                         statusBadge.className = "status-badge inactive";
                         statusBadge.innerHTML =
                             '<div class="status-dot"></div><span>Неактивна</span>';
-                        daysLeft.textContent = balanceDays;
+                        daysLeft.textContent = "0";
                     }
                 } else {
                     statusBadge.className = "status-badge inactive";
                     statusBadge.innerHTML =
                         '<div class="status-dot"></div><span>Неактивна</span>';
-                    daysLeft.textContent = balanceDays;
+                    daysLeft.textContent = "0";
                 }
                 
                 // Update installation section

@@ -141,6 +141,9 @@ async def miniapp():
 async def get_user_api(telegram_id: int):
     from app.database.crud.user import get_user_by_telegram_id
     from app.database.crud.subscription import get_subscription_by_user_id
+    from app.remnawave_api import RemnaWaveAPI
+    from datetime import datetime
+    import math
     
     async with AsyncSessionLocal() as db:
         user = await get_user_by_telegram_id(db, telegram_id)
@@ -149,15 +152,47 @@ async def get_user_api(telegram_id: int):
         
         subscription = await get_subscription_by_user_id(db, user.id)
         
+        days_left = 0
+        expires_at = None
+        device_count = 1
+        
+        if user.remnawave_uuid:
+            try:
+                async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
+                    remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
+                    if remnawave_user and remnawave_user.expire_at:
+                        expires_at = remnawave_user.expire_at
+                        now = datetime.utcnow()
+                        if expires_at > now:
+                            diff = expires_at - now
+                            days_left = math.ceil(diff.total_seconds() / 86400)
+                        else:
+                            days_left = 0
+                    if remnawave_user:
+                        device_count = remnawave_user.hwid_device_limit or 1
+            except Exception as e:
+                logger.warning(f"Failed to fetch RemnaWave user: {e}")
+                if subscription and subscription.expires_at:
+                    expires_at = subscription.expires_at
+                    now = datetime.utcnow()
+                    if expires_at > now:
+                        diff = expires_at - now
+                        days_left = math.ceil(diff.total_seconds() / 86400)
+        
+        daily_price = settings.SUBSCRIPTION_DAILY_PRICE
+        total_daily_price = daily_price * device_count
+        
         return {
             "telegram_id": user.telegram_id,
             "username": user.username,
             "balance": user.balance,
             "subscription": {
                 "status": subscription.status.value if subscription else "inactive",
-                "expires_at": subscription.expires_at.isoformat() if subscription and subscription.expires_at else None,
-                "days_paid": subscription.days_paid if subscription else 0,
-                "daily_price": subscription.daily_price if subscription else 6.0
+                "expires_at": expires_at.isoformat() if expires_at else None,
+                "days_left": days_left,
+                "daily_price": total_daily_price,
+                "device_count": device_count,
+                "price_per_device": daily_price
             } if subscription else None,
             "remnawave_uuid": user.remnawave_uuid,
             "trial_used": user.trial_used
