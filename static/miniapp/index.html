@@ -1619,7 +1619,7 @@
                 document.getElementById("content").classList.remove("hidden");
             }
 
-            function updateUI() {
+            async function updateUI() {
                 if (!userData) return;
 
                 // Username
@@ -1674,7 +1674,7 @@
                 updateInstallSection();
                 
                 // Update devices section
-                updateDevicesSection();
+                await updateDevicesSection();
             }
 
             // Modal functions
