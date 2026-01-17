@@ -413,8 +413,8 @@
             .balance-card {
                 background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
                 border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 20px;
-                padding: 24px;
+                border-radius: 16px;
+                padding: 16px;
                 position: relative;
                 overflow: hidden;
             }
@@ -446,13 +446,13 @@
 
             .balance-value {
                 font-family: "JetBrains Mono", monospace;
-                font-size: 36px;
+                font-size: 28px;
                 font-weight: 600;
-                margin-bottom: 16px;
+                margin-bottom: 12px;
             }
 
             .balance-value span {
-                font-size: 20px;
+                font-size: 16px;
                 color: var(--tg-theme-hint-color);
             }
 
@@ -1215,6 +1215,28 @@
                     </div>
                 </div>
 
+                <!-- Installation Button -->
+                <div id="install-btn-wrapper" class="install-btn-wrapper hidden">
+                    <button class="install-open-btn" onclick="openInstallModal()">
+                        <div class="install-open-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </div>
+                        <div class="install-open-text">
+                            <span class="install-open-title">Установка и подключение</span>
+                            <span class="install-open-desc">Инструкция по настройке VPN</span>
+                        </div>
+                        <div class="install-open-arrow">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+
                 <!-- Devices Section -->
                 <div id="devices-section" class="devices-section">
                     <div class="devices-card" onclick="openDevicesModal()">
@@ -1323,28 +1345,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Installation Button -->
-                <div id="install-btn-wrapper" class="install-btn-wrapper hidden">
-                    <button class="install-open-btn" onclick="openInstallModal()">
-                        <div class="install-open-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                        </div>
-                        <div class="install-open-text">
-                            <span class="install-open-title">Установка и подключение</span>
-                            <span class="install-open-desc">Инструкция по настройке VPN</span>
-                        </div>
-                        <div class="install-open-arrow">
-                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"/>
-                            </svg>
-                        </div>
-                    </button>
                 </div>
             </div>
         </div>
