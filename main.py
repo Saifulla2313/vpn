@@ -332,17 +332,17 @@ async def get_subscription_key(telegram_id: int):
             return JSONResponse({"error": "VPN key not configured"}, status_code=400)
         
         try:
-            api = RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY)
-            remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
-            
-            if remnawave_user and remnawave_user.subscription_url:
-                return {
-                    "status": "ok",
-                    "key": remnawave_user.subscription_url,
-                    "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None
-                }
-            else:
-                return JSONResponse({"error": "VPN key not available"}, status_code=400)
+            async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
+                remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
+                
+                if remnawave_user and remnawave_user.subscription_url:
+                    return {
+                        "status": "ok",
+                        "key": remnawave_user.subscription_url,
+                        "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None
+                    }
+                else:
+                    return JSONResponse({"error": "VPN key not available"}, status_code=400)
         except Exception as e:
             logger.error(f"Error fetching VPN key: {e}")
             return JSONResponse({"error": "Failed to fetch VPN key"}, status_code=500)
