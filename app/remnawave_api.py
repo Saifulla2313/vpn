@@ -194,13 +194,18 @@ class RemnaWaveAPI:
                 logger.debug("SSL проверка отключена для локального HTTPS")
                 
         elif conn_type == "external":
-            logger.debug("Используют внешнее подключение с полной SSL проверкой")
-            pass
+            logger.debug("Используют внешнее подключение")
+            if self.base_url.startswith('https://'):
+                ssl_context = ssl.create_default_context()
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+                connector_kwargs['ssl'] = ssl_context
+                logger.debug("SSL проверка отключена для внешнего HTTPS")
             
         connector = aiohttp.TCPConnector(**connector_kwargs)
         
         session_kwargs = {
-            'timeout': aiohttp.ClientTimeout(total=30),
+            'timeout': aiohttp.ClientTimeout(total=60, connect=30),
             'headers': headers,
             'connector': connector
         }
