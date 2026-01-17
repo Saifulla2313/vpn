@@ -48,8 +48,12 @@ class Settings:
     CRYPTOBOT_WEBHOOK_SECRET: str = ""
     
     # Trial settings
-    TRIAL_DAYS: int = 1
-    TRIAL_ENABLED: bool = True
+    TRIAL_DAYS: int = field(default_factory=lambda: int(os.getenv("TRIAL_DAYS", "1")))
+    TRIAL_TRAFFIC_GB: int = field(default_factory=lambda: int(os.getenv("TRIAL_TRAFFIC_GB", "10")))
+    TRIAL_ENABLED: bool = field(default_factory=lambda: os.getenv("TRIAL_ENABLED", "true").lower() == "true")
+    
+    # RemnaWave default internal squad UUID (used for new subscriptions)
+    REMNAWAVE_DEFAULT_SQUAD_UUID: str = field(default_factory=lambda: os.getenv("REMNAWAVE_DEFAULT_SQUAD_UUID", ""))
     
     # Maintenance
     MAINTENANCE_MODE: bool = False
