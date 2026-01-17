@@ -1582,7 +1582,7 @@
 
                     if (response.ok) {
                         userData = await response.json();
-                        updateUI();
+                        await updateUI();
                     } else {
                         // User not found - show demo data
                         userData = {
@@ -1593,7 +1593,7 @@
                             subscription: null,
                             trial_used: false,
                         };
-                        updateUI();
+                        await updateUI();
                     }
                 } catch (error) {
                     console.error("Error loading user data:", error);
@@ -1612,7 +1612,7 @@
                         },
                         trial_used: true,
                     };
-                    updateUI();
+                    await updateUI();
                 }
 
                 document.getElementById("loading").classList.add("hidden");
