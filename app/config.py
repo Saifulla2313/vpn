@@ -55,6 +55,9 @@ class Settings:
     # RemnaWave default internal squad UUID (used for new subscriptions)
     REMNAWAVE_DEFAULT_SQUAD_UUID: str = field(default_factory=lambda: os.getenv("REMNAWAVE_DEFAULT_SQUAD_UUID", ""))
     
+    # Default device limit for new users (HWID limit)
+    DEFAULT_DEVICE_LIMIT: int = field(default_factory=lambda: int(os.getenv("DEFAULT_DEVICE_LIMIT", "1")))
+    
     # Maintenance
     MAINTENANCE_MODE: bool = False
     

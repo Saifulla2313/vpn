@@ -45,6 +45,7 @@ async def create_remnawave_user(user, db: AsyncSession, is_trial: bool = True) -
             days = settings.TRIAL_DAYS if is_trial else 30
             traffic_gb = settings.TRIAL_TRAFFIC_GB if is_trial else 0
             traffic_bytes = traffic_gb * 1024 * 1024 * 1024 if traffic_gb > 0 else 0
+            device_limit = settings.DEFAULT_DEVICE_LIMIT
             
             active_squads = []
             if settings.REMNAWAVE_DEFAULT_SQUAD_UUID:
@@ -57,12 +58,13 @@ async def create_remnawave_user(user, db: AsyncSession, is_trial: bool = True) -
                 status=UserStatus.ACTIVE,
                 telegram_id=user.telegram_id,
                 traffic_limit_bytes=traffic_bytes,
-                active_internal_squads=active_squads
+                active_internal_squads=active_squads,
+                hwid_device_limit=device_limit
             )
             
             await update_user_remnawave(db, user.id, rw_user.uuid, rw_user.short_uuid)
             
-            logger.info(f"Created RemnaWave user: {username}, days={days}, traffic={traffic_gb}GB, squads={active_squads}")
+            logger.info(f"Created RemnaWave user: {username}, days={days}, traffic={traffic_gb}GB, devices={device_limit}, squads={active_squads}")
             
             return {
                 "uuid": rw_user.uuid,
