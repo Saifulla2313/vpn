@@ -195,7 +195,6 @@ async def callback_get_key(callback: CallbackQuery, db: AsyncSession):
     
     text = get_text(
         "vpn_key",
-        key=subscription_url,
         subscription_url=subscription_url
     )
     
@@ -233,7 +232,6 @@ async def callback_refresh_key(callback: CallbackQuery, db: AsyncSession):
     
     text = get_text(
         "vpn_key",
-        key=subscription_url,
         subscription_url=subscription_url
     )
     

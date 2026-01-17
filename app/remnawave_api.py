@@ -596,35 +596,69 @@ class RemnaWaveAPI:
         happ_link = happ_data.get('link') or happ_data.get('url')
         happ_crypto_link = happ_data.get('cryptoLink') or happ_data.get('crypto_link')
 
+        used_traffic = user_data.get('usedTrafficBytes') or user_data.get('used_traffic_bytes') or 0
+        lifetime_traffic = user_data.get('lifetimeUsedTrafficBytes') or user_data.get('lifetime_used_traffic_bytes') or 0
+        traffic_limit = user_data.get('trafficLimitBytes') or user_data.get('traffic_limit_bytes') or 0
+        
+        traffic_strategy_raw = user_data.get('trafficLimitStrategy') or user_data.get('traffic_limit_strategy') or 'NO_RESET'
+        try:
+            traffic_strategy = TrafficLimitStrategy(traffic_strategy_raw)
+        except ValueError:
+            traffic_strategy = TrafficLimitStrategy.NO_RESET
+        
+        expire_at_raw = user_data.get('expireAt') or user_data.get('expire_at')
+        if expire_at_raw:
+            expire_at = datetime.fromisoformat(str(expire_at_raw).replace('Z', '+00:00'))
+        else:
+            expire_at = datetime.now() + timedelta(days=30)
+        
+        created_at_raw = user_data.get('createdAt') or user_data.get('created_at')
+        if created_at_raw:
+            created_at = datetime.fromisoformat(str(created_at_raw).replace('Z', '+00:00'))
+        else:
+            created_at = datetime.now()
+            
+        updated_at_raw = user_data.get('updatedAt') or user_data.get('updated_at')
+        if updated_at_raw:
+            updated_at = datetime.fromisoformat(str(updated_at_raw).replace('Z', '+00:00'))
+        else:
+            updated_at = datetime.now()
+
+        status_raw = user_data.get('status', 'ACTIVE')
+        try:
+            status = UserStatus(status_raw)
+        except ValueError:
+            status = UserStatus.ACTIVE
+
         return RemnaWaveUser(
-            uuid=user_data['uuid'],
-            short_uuid=user_data['shortUuid'],
-            username=user_data['username'],
-            status=UserStatus(user_data['status']),
-            used_traffic_bytes=int(user_data['usedTrafficBytes']),
-            lifetime_used_traffic_bytes=int(user_data['lifetimeUsedTrafficBytes']),
-            traffic_limit_bytes=user_data['trafficLimitBytes'],
-            traffic_limit_strategy=TrafficLimitStrategy(user_data['trafficLimitStrategy']),
-            expire_at=datetime.fromisoformat(user_data['expireAt'].replace('Z', '+00:00')),
-            telegram_id=user_data.get('telegramId'),
+            uuid=user_data.get('uuid', ''),
+            short_uuid=user_data.get('shortUuid') or user_data.get('short_uuid', ''),
+            username=user_data.get('username', ''),
+            status=status,
+            used_traffic_bytes=int(used_traffic),
+            lifetime_used_traffic_bytes=int(lifetime_traffic),
+            traffic_limit_bytes=int(traffic_limit),
+            traffic_limit_strategy=traffic_strategy,
+            expire_at=expire_at,
+            telegram_id=user_data.get('telegramId') or user_data.get('telegram_id'),
             email=user_data.get('email'),
-            hwid_device_limit=user_data.get('hwidDeviceLimit'),
+            hwid_device_limit=user_data.get('hwidDeviceLimit') or user_data.get('hwid_device_limit'),
             description=user_data.get('description'),
             tag=user_data.get('tag'),
-            subscription_url=user_data['subscriptionUrl'],
-            active_internal_squads=user_data['activeInternalSquads'],
-            created_at=datetime.fromisoformat(user_data['createdAt'].replace('Z', '+00:00')),
-            updated_at=datetime.fromisoformat(user_data['updatedAt'].replace('Z', '+00:00')),
-            sub_last_user_agent=user_data.get('subLastUserAgent'),
-            sub_last_opened_at=self._parse_optional_datetime(user_data.get('subLastOpenedAt')),
-            online_at=self._parse_optional_datetime(user_data.get('onlineAt')),
-            sub_revoked_at=self._parse_optional_datetime(user_data.get('subRevokedAt')),
-            last_traffic_reset_at=self._parse_optional_datetime(user_data.get('lastTrafficResetAt')),
-            trojan_password=user_data.get('trojanPassword'),
-            vless_uuid=user_data.get('vlessUuid'),
-            ss_password=user_data.get('ssPassword'),
-            first_connected_at=self._parse_optional_datetime(user_data.get('firstConnectedAt')),
-            last_triggered_threshold=user_data.get('lastTriggeredThreshold', 0),
+            subscription_url=user_data.get('subscriptionUrl') or user_data.get('subscription_url', ''),
+            active_internal_squads=user_data.get('activeInternalSquads') or user_data.get('active_internal_squads', []),
+            created_at=created_at,
+            updated_at=updated_at,
+            sub_last_user_agent=user_data.get('subLastUserAgent') or user_data.get('sub_last_user_agent'),
+            sub_last_opened_at=self._parse_optional_datetime(user_data.get('subLastOpenedAt') or user_data.get('sub_last_opened_at')),
+            online_at=self._parse_optional_datetime(user_data.get('onlineAt') or user_data.get('online_at')),
+            sub_revoked_at=self._parse_optional_datetime(user_data.get('subRevokedAt') or user_data.get('sub_revoked_at')),
+            last_traffic_reset_at=self._parse_optional_datetime(user_data.get('lastTrafficResetAt') or user_data.get('last_traffic_reset_at')),
+            trojan_password=user_data.get('trojanPassword') or user_data.get('trojan_password'),
+            vless_uuid=user_data.get('vlessUuid') or user_data.get('vless_uuid'),
+            ss_password=user_data.get('ssPassword') or user_data.get('ss_password'),
+            first_connected_at=self._parse_optional_datetime(user_data.get('firstConnectedAt') or user_data.get('first_connected_at')),
+            last_triggered_threshold=user_data.get('lastTriggeredThreshold') or user_data.get('last_triggered_threshold', 0),
             happ_link=happ_link,
             happ_crypto_link=happ_crypto_link
         )
