@@ -94,15 +94,18 @@ def get_channel_sub_keyboard(channel_url: str) -> InlineKeyboardMarkup:
 def get_admin_keyboard() -> InlineKeyboardMarkup:
     buttons = [
         [
-            InlineKeyboardButton(text="👥 Пользователи", callback_data="admin_users"),
-            InlineKeyboardButton(text="📊 Статистика", callback_data="admin_stats")
+            InlineKeyboardButton(text="📊 Статистика", callback_data="admin_stats"),
+            InlineKeyboardButton(text="👥 Пользователи", callback_data="admin_users")
         ],
         [
-            InlineKeyboardButton(text="💰 Пополнить баланс", callback_data="admin_add_balance"),
-            InlineKeyboardButton(text="📢 Рассылка", callback_data="admin_broadcast")
+            InlineKeyboardButton(text="🔍 Поиск", callback_data="admin_search"),
+            InlineKeyboardButton(text="💰 Баланс", callback_data="admin_add_balance")
         ],
         [
-            InlineKeyboardButton(text="🎁 Промокоды", callback_data="admin_promo"),
+            InlineKeyboardButton(text="📢 Рассылка", callback_data="admin_broadcast"),
+            InlineKeyboardButton(text="🎁 Промокоды", callback_data="admin_promo")
+        ],
+        [
             InlineKeyboardButton(text="⚙️ Настройки", callback_data="admin_settings")
         ]
     ]
