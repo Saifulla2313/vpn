@@ -1965,7 +1965,7 @@
             }
 
             async function loadDevices() {
-                const telegramId = getTelegramId();
+                const telegramId = userData?.telegram_id;
                 if (!telegramId) return;
                 
                 try {
@@ -2078,7 +2078,7 @@
             async function removeDevice(hwid) {
                 if (!confirm('Удалить это устройство?')) return;
                 
-                const telegramId = getTelegramId();
+                const telegramId = userData?.telegram_id;
                 if (!telegramId) return;
                 
                 try {
@@ -2100,7 +2100,7 @@
             }
 
             async function updateDevicesSection() {
-                const telegramId = getTelegramId();
+                const telegramId = userData?.telegram_id;
                 const countEl = document.getElementById('devices-count');
                 
                 if (!telegramId || !userData?.remnawave_uuid) {
