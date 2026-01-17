@@ -434,6 +434,10 @@
                 pointer-events: none;
             }
 
+            .balance-header {
+                margin-bottom: 16px;
+            }
+
             .balance-label {
                 font-size: 13px;
                 color: var(--tg-theme-hint-color);
@@ -450,6 +454,47 @@
             .balance-value span {
                 font-size: 20px;
                 color: var(--tg-theme-hint-color);
+            }
+
+            .balance-stats {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                margin-bottom: 20px;
+                padding: 12px 16px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+            }
+
+            .stat-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                color: var(--tg-theme-hint-color);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .stat-value {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 18px;
+                font-weight: 600;
+            }
+
+            .stat-value.accent {
+                color: var(--accent);
+            }
+
+            .stat-divider {
+                width: 1px;
+                height: 32px;
+                background: rgba(255, 255, 255, 0.1);
             }
 
             .topup-btn {
@@ -726,55 +771,29 @@
                     <p id="username">Загрузка...</p>
                 </div>
 
-                <!-- Status Card -->
-                <div class="status-card">
-                    <div class="status-header">
-                        <div id="status-badge" class="status-badge inactive">
-                            <div class="status-dot"></div>
-                            <span>Неактивна</span>
-                        </div>
-                    </div>
-                    <div class="status-info">
-                        <div class="info-block">
-                            <label>Осталось дней</label>
-                            <div id="days-left" class="value">0</div>
-                        </div>
-                        <div class="info-block">
-                            <label>Цена в день</label>
-                            <div id="daily-price" class="value accent">6₽</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <div class="action-btn primary" onclick="openTopupModal()">
-                        <div class="action-icon">
-                            <svg viewBox="0 0 24 24">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                        </div>
-                        <span>Пополнить</span>
-                    </div>
-                    <div class="action-btn" onclick="activateTrial()">
-                        <div class="action-icon">
-                            <svg viewBox="0 0 24 24">
-                                <polygon
-                                    points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"
-                                />
-                            </svg>
-                        </div>
-                        <span>Пробный</span>
-                    </div>
-                </div>
-
-                <!-- Balance Section -->
+                <!-- Balance Card -->
                 <div class="balance-section">
                     <div class="balance-card">
+                        <div class="balance-header">
+                            <div id="status-badge" class="status-badge inactive">
+                                <div class="status-dot"></div>
+                                <span>Неактивна</span>
+                            </div>
+                        </div>
                         <div class="balance-label">Ваш баланс</div>
                         <div id="balance" class="balance-value">
                             0<span>₽</span>
+                        </div>
+                        <div class="balance-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Осталось дней</span>
+                                <span id="days-left" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-divider"></div>
+                            <div class="stat-item">
+                                <span class="stat-label">Цена в день</span>
+                                <span id="daily-price" class="stat-value accent">6₽</span>
+                            </div>
                         </div>
                         <button class="topup-btn" onclick="openTopupModal()">
                             <svg viewBox="0 0 24 24">
