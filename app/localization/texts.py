@@ -84,7 +84,7 @@ TEXTS = {
         "vpn_key": """
 🔐 <b>Ваш VPN ключ:</b>
 
-<code>{key}</code>
+<code>{subscription_url}</code>
 
 📱 <b>Инструкции по подключению:</b>
 
