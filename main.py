@@ -219,5 +219,120 @@ async def yookassa_webhook(request: Request):
         return {"status": "error", "message": str(e)}
 
 
+@app.post("/api/trial/activate")
+async def activate_trial_api(request: Request):
+    """Activate trial subscription via miniapp"""
+    from app.database.crud.user import get_user_by_telegram_id, mark_trial_used
+    from app.database.crud.subscription import get_subscription_by_user_id, create_subscription
+    from app.database.models import SubscriptionStatus
+    from app.services.subscription_service import SubscriptionService
+    
+    try:
+        data = await request.json()
+        telegram_id = data.get("telegram_id")
+        
+        if not telegram_id:
+            return JSONResponse({"error": "telegram_id required"}, status_code=400)
+        
+        async with AsyncSessionLocal() as db:
+            user = await get_user_by_telegram_id(db, telegram_id)
+            if not user:
+                return JSONResponse({"error": "User not found"}, status_code=404)
+            
+            if user.trial_used:
+                return JSONResponse({"error": "Trial already used"}, status_code=400)
+            
+            subscription_service = SubscriptionService()
+            result = await subscription_service.activate_trial(db, user)
+            
+            if result.get("success"):
+                return {"status": "ok", "message": "Trial activated", "key": result.get("subscription_key")}
+            else:
+                return JSONResponse({"error": result.get("error", "Failed to activate trial")}, status_code=500)
+    
+    except Exception as e:
+        logger.error(f"Trial activation error: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post("/api/payment/create")
+async def create_payment_api(request: Request):
+    """Create payment link for miniapp"""
+    from app.database.crud.user import get_user_by_telegram_id
+    from app.database.crud.transaction import create_transaction
+    from app.database.models import TransactionStatus
+    from yookassa import Configuration, Payment as YooPayment
+    import uuid
+    
+    try:
+        data = await request.json()
+        telegram_id = data.get("telegram_id")
+        amount = data.get("amount", 300)
+        
+        if not telegram_id:
+            return JSONResponse({"error": "telegram_id required"}, status_code=400)
+        
+        if amount < 50:
+            return JSONResponse({"error": "Minimum amount is 50₽"}, status_code=400)
+        
+        async with AsyncSessionLocal() as db:
+            user = await get_user_by_telegram_id(db, telegram_id)
+            if not user:
+                return JSONResponse({"error": "User not found"}, status_code=404)
+            
+            Configuration.account_id = settings.YOOKASSA_SHOP_ID
+            Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
+            
+            idempotence_key = str(uuid.uuid4())
+            
+            payment = YooPayment.create({
+                "amount": {"value": str(amount), "currency": "RUB"},
+                "confirmation": {"type": "redirect", "return_url": f"https://t.me/{settings.BOT_USERNAME}"},
+                "capture": True,
+                "description": f"Пополнение VPN баланса - {amount}₽",
+                "metadata": {"telegram_id": telegram_id, "user_id": user.id}
+            }, idempotence_key)
+            
+            await create_transaction(
+                db,
+                user_id=user.id,
+                amount=float(amount),
+                provider="yookassa",
+                payment_id=payment.id,
+                status=TransactionStatus.PENDING
+            )
+            
+            return {
+                "status": "ok",
+                "payment_url": payment.confirmation.confirmation_url
+            }
+    
+    except Exception as e:
+        logger.error(f"Payment creation error: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.get("/api/subscription/key/{telegram_id}")
+async def get_subscription_key(telegram_id: int):
+    """Get VPN subscription key for miniapp"""
+    from app.database.crud.user import get_user_by_telegram_id
+    from app.database.crud.subscription import get_subscription_by_user_id
+    
+    async with AsyncSessionLocal() as db:
+        user = await get_user_by_telegram_id(db, telegram_id)
+        if not user:
+            return JSONResponse({"error": "User not found"}, status_code=404)
+        
+        subscription = await get_subscription_by_user_id(db, user.id)
+        if not subscription or subscription.status.value == "inactive":
+            return JSONResponse({"error": "No active subscription"}, status_code=400)
+        
+        return {
+            "status": "ok",
+            "key": subscription.subscription_key,
+            "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None
+        }
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)

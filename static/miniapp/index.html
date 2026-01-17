@@ -1,95 +1,1306 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HarleyVPN</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--tg-theme-bg-color, #1a1a2e);
-            color: var(--tg-theme-text-color, #ffffff);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 400px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-size: 24px; margin-bottom: 10px; }
-        .card {
-            background: var(--tg-theme-secondary-bg-color, #16213e);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-        .card-title { font-size: 14px; opacity: 0.7; margin-bottom: 5px; }
-        .card-value { font-size: 24px; font-weight: 600; }
-        .btn {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-bottom: 10px;
-            background: var(--tg-theme-button-color, #4361ee);
-            color: var(--tg-theme-button-text-color, #ffffff);
-        }
-        .btn:active { opacity: 0.8; }
-        .loading { text-align: center; padding: 50px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🛡️ HarleyVPN</h1>
-            <p>Ваш VPN сервис</p>
-        </div>
-        
-        <div id="content" class="loading">Загрузка...</div>
-    </div>
-    
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        
-        const userId = tg.initDataUnsafe?.user?.id;
-        
-        async function loadUser() {
-            if (!userId) {
-                document.getElementById('content').innerHTML = '<p>Откройте через Telegram</p>';
-                return;
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>VPN Keeper</title>
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --tg-theme-bg-color: #0f0f0f;
+                --tg-theme-text-color: #ffffff;
+                --tg-theme-hint-color: #8b8b8b;
+                --tg-theme-link-color: #00d4aa;
+                --tg-theme-button-color: #00d4aa;
+                --tg-theme-button-text-color: #000000;
+                --tg-theme-secondary-bg-color: #1a1a1a;
+
+                --accent: #00d4aa;
+                --accent-glow: rgba(0, 212, 170, 0.3);
+                --accent-dim: rgba(0, 212, 170, 0.1);
+                --danger: #ff4757;
+                --warning: #ffa502;
+                --success: #00d4aa;
+                --card-bg: rgba(26, 26, 26, 0.8);
+                --card-border: rgba(255, 255, 255, 0.06);
+                --glass: rgba(255, 255, 255, 0.03);
             }
-            
-            try {
-                const resp = await fetch(`/api/user/${userId}`);
-                const data = await resp.json();
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    "Outfit",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    sans-serif;
+                background: var(--tg-theme-bg-color, #0f0f0f);
+                color: var(--tg-theme-text-color, #ffffff);
+                min-height: 100vh;
+                overflow-x: hidden;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            /* Animated background */
+            .bg-pattern {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: -1;
+                background:
+                    radial-gradient(
+                        ellipse 80% 50% at 50% -20%,
+                        var(--accent-dim),
+                        transparent
+                    ),
+                    radial-gradient(
+                        ellipse 60% 40% at 100% 100%,
+                        rgba(0, 100, 200, 0.08),
+                        transparent
+                    ),
+                    linear-gradient(
+                        180deg,
+                        #0a0a0a 0%,
+                        #0f0f0f 50%,
+                        #0a0a0a 100%
+                    );
+            }
+
+            .bg-grid {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: -1;
+                background-image:
+                    linear-gradient(
+                        rgba(255, 255, 255, 0.02) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        90deg,
+                        rgba(255, 255, 255, 0.02) 1px,
+                        transparent 1px
+                    );
+                background-size: 50px 50px;
+                mask-image: radial-gradient(
+                    ellipse 100% 100% at 50% 0%,
+                    black,
+                    transparent 70%
+                );
+            }
+
+            .container {
+                max-width: 440px;
+                margin: 0 auto;
+                padding: 16px;
+                padding-bottom: 100px;
+            }
+
+            /* Header */
+            .header {
+                text-align: center;
+                padding: 24px 0 32px;
+                animation: fadeInDown 0.6s ease;
+            }
+
+            .logo {
+                width: 72px;
+                height: 72px;
+                margin: 0 auto 16px;
+                background: linear-gradient(135deg, var(--accent), #00a080);
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 8px 32px var(--accent-glow);
+                position: relative;
+            }
+
+            .logo::before {
+                content: "";
+                position: absolute;
+                inset: -2px;
+                border-radius: 22px;
+                background: linear-gradient(135deg, var(--accent), transparent);
+                z-index: -1;
+                opacity: 0.5;
+            }
+
+            .logo svg {
+                width: 36px;
+                height: 36px;
+                fill: #000;
+            }
+
+            .header h1 {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 4px;
+                letter-spacing: -0.5px;
+            }
+
+            .header p {
+                color: var(--tg-theme-hint-color, #8b8b8b);
+                font-size: 14px;
+                font-weight: 400;
+            }
+
+            /* Status Card */
+            .status-card {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 20px;
+                padding: 24px;
+                margin-bottom: 16px;
+                backdrop-filter: blur(20px);
+                animation: fadeInUp 0.6s ease 0.1s both;
+            }
+
+            .status-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 20px;
+            }
+
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 16px;
+                border-radius: 100px;
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            .status-badge.active {
+                background: rgba(0, 212, 170, 0.15);
+                color: var(--success);
+            }
+
+            .status-badge.inactive {
+                background: rgba(255, 71, 87, 0.15);
+                color: var(--danger);
+            }
+
+            .status-badge.trial {
+                background: rgba(255, 165, 2, 0.15);
+                color: var(--warning);
+            }
+
+            .status-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: currentColor;
+                animation: pulse 2s infinite;
+            }
+
+            .status-info {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }
+
+            .info-block {
+                background: var(--glass);
+                border-radius: 14px;
+                padding: 16px;
+            }
+
+            .info-block label {
+                display: block;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--tg-theme-hint-color);
+                margin-bottom: 6px;
+            }
+
+            .info-block .value {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 20px;
+                font-weight: 600;
+                color: var(--tg-theme-text-color);
+            }
+
+            .info-block .value.accent {
+                color: var(--accent);
+            }
+
+            /* Quick Actions */
+            .quick-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 16px;
+                animation: fadeInUp 0.6s ease 0.2s both;
+            }
+
+            .action-btn {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 16px;
+                padding: 20px 16px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                color: inherit;
+            }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+                border-color: var(--accent);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            }
+
+            .action-btn:active {
+                transform: scale(0.98);
+            }
+
+            .action-btn.primary {
+                background: linear-gradient(135deg, var(--accent), #00a080);
+                border: none;
+                color: #000;
+            }
+
+            .action-btn.primary:hover {
+                box-shadow: 0 8px 32px var(--accent-glow);
+            }
+
+            .action-icon {
+                width: 44px;
+                height: 44px;
+                margin: 0 auto 12px;
+                background: var(--glass);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .action-btn.primary .action-icon {
+                background: rgba(0, 0, 0, 0.2);
+            }
+
+            .action-icon svg {
+                width: 22px;
+                height: 22px;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 2;
+            }
+
+            .action-btn span {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            /* Menu Section */
+            .menu-section {
+                animation: fadeInUp 0.6s ease 0.3s both;
+            }
+
+            .menu-title {
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: var(--tg-theme-hint-color);
+                margin-bottom: 12px;
+                padding-left: 4px;
+            }
+
+            .menu-list {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 20px;
+                overflow: hidden;
+                backdrop-filter: blur(20px);
+            }
+
+            .menu-item {
+                display: flex;
+                align-items: center;
+                padding: 16px 20px;
+                cursor: pointer;
+                transition: background 0.2s ease;
+                border-bottom: 1px solid var(--card-border);
+            }
+
+            .menu-item:last-child {
+                border-bottom: none;
+            }
+
+            .menu-item:hover {
+                background: var(--glass);
+            }
+
+            .menu-item:active {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            .menu-icon {
+                width: 40px;
+                height: 40px;
+                background: var(--glass);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 14px;
+            }
+
+            .menu-icon svg {
+                width: 20px;
+                height: 20px;
+                stroke: var(--accent);
+                fill: none;
+                stroke-width: 2;
+            }
+
+            .menu-content {
+                flex: 1;
+            }
+
+            .menu-content h4 {
+                font-size: 15px;
+                font-weight: 500;
+                margin-bottom: 2px;
+            }
+
+            .menu-content p {
+                font-size: 13px;
+                color: var(--tg-theme-hint-color);
+            }
+
+            .menu-arrow {
+                color: var(--tg-theme-hint-color);
+                opacity: 0.5;
+            }
+
+            .menu-arrow svg {
+                width: 18px;
+                height: 18px;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 2;
+            }
+
+            /* Balance Section */
+            .balance-section {
+                margin-top: 16px;
+                animation: fadeInUp 0.6s ease 0.4s both;
+            }
+
+            .balance-card {
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 20px;
+                padding: 24px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .balance-card::before {
+                content: "";
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 100%;
+                height: 100%;
+                background: radial-gradient(
+                    circle,
+                    var(--accent-dim) 0%,
+                    transparent 70%
+                );
+                pointer-events: none;
+            }
+
+            .balance-label {
+                font-size: 13px;
+                color: var(--tg-theme-hint-color);
+                margin-bottom: 8px;
+            }
+
+            .balance-value {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 36px;
+                font-weight: 600;
+                margin-bottom: 16px;
+            }
+
+            .balance-value span {
+                font-size: 20px;
+                color: var(--tg-theme-hint-color);
+            }
+
+            .topup-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+                padding: 14px;
+                background: var(--accent);
+                color: #000;
+                border: none;
+                border-radius: 12px;
+                font-family: inherit;
+                font-size: 15px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .topup-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px var(--accent-glow);
+            }
+
+            .topup-btn:active {
+                transform: scale(0.98);
+            }
+
+            .topup-btn svg {
+                width: 18px;
+                height: 18px;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 2.5;
+            }
+
+            /* Loading State */
+            .loading {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 60vh;
+                gap: 16px;
+            }
+
+            .spinner {
+                width: 48px;
+                height: 48px;
+                border: 3px solid var(--glass);
+                border-top-color: var(--accent);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            .loading p {
+                color: var(--tg-theme-hint-color);
+                font-size: 14px;
+            }
+
+            /* Animations */
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes fadeInDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* Responsive */
+            @media (max-width: 380px) {
+                .container {
+                    padding: 12px;
+                }
+
+                .status-info {
+                    grid-template-columns: 1fr;
+                }
+
+                .quick-actions {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            /* Modal */
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+                display: none;
+                align-items: flex-end;
+                justify-content: center;
+                padding: 16px;
+            }
+
+            .modal-overlay.active {
+                display: flex;
+                animation: fadeIn 0.3s ease;
+            }
+
+            .modal {
+                background: var(--tg-theme-secondary-bg-color);
+                border-radius: 24px 24px 0 0;
+                width: 100%;
+                max-width: 440px;
+                max-height: 80vh;
+                overflow-y: auto;
+                animation: slideUp 0.3s ease;
+            }
+
+            .modal-header {
+                padding: 20px 24px;
+                border-bottom: 1px solid var(--card-border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .modal-header h3 {
+                font-size: 18px;
+                font-weight: 600;
+            }
+
+            .modal-close {
+                width: 32px;
+                height: 32px;
+                background: var(--glass);
+                border: none;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--tg-theme-hint-color);
+            }
+
+            .modal-close svg {
+                width: 18px;
+                height: 18px;
+                stroke: currentColor;
+                fill: none;
+                stroke-width: 2;
+            }
+
+            .modal-body {
+                padding: 24px;
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideUp {
+                from {
+                    transform: translateY(100%);
+                }
+                to {
+                    transform: translateY(0);
+                }
+            }
+
+            /* Amount selector */
+            .amount-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .amount-option {
+                padding: 16px 12px;
+                background: var(--glass);
+                border: 2px solid transparent;
+                border-radius: 12px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .amount-option:hover {
+                background: var(--accent-dim);
+            }
+
+            .amount-option.selected {
+                border-color: var(--accent);
+                background: var(--accent-dim);
+            }
+
+            .amount-option .amount {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+
+            .amount-option .days {
+                font-size: 12px;
+                color: var(--tg-theme-hint-color);
+            }
+
+            /* Hidden */
+            .hidden {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="bg-pattern"></div>
+        <div class="bg-grid"></div>
+
+        <div class="container">
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Загрузка...</p>
+            </div>
+
+            <!-- Main Content -->
+            <div id="content" class="hidden">
+                <!-- Header -->
+                <div class="header">
+                    <div class="logo">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                            />
+                            <path d="M9 12l2 2 4-4" />
+                        </svg>
+                    </div>
+                    <h1>VPN Keeper</h1>
+                    <p id="username">Загрузка...</p>
+                </div>
+
+                <!-- Status Card -->
+                <div class="status-card">
+                    <div class="status-header">
+                        <div id="status-badge" class="status-badge inactive">
+                            <div class="status-dot"></div>
+                            <span>Неактивна</span>
+                        </div>
+                    </div>
+                    <div class="status-info">
+                        <div class="info-block">
+                            <label>Осталось дней</label>
+                            <div id="days-left" class="value">0</div>
+                        </div>
+                        <div class="info-block">
+                            <label>Цена в день</label>
+                            <div id="daily-price" class="value accent">6₽</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <div class="action-btn primary" onclick="openTopupModal()">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                        </div>
+                        <span>Пополнить</span>
+                    </div>
+                    <div class="action-btn" onclick="activateTrial()">
+                        <div class="action-icon">
+                            <svg viewBox="0 0 24 24">
+                                <polygon
+                                    points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"
+                                />
+                            </svg>
+                        </div>
+                        <span>Пробный</span>
+                    </div>
+                </div>
+
+                <!-- Balance Section -->
+                <div class="balance-section">
+                    <div class="balance-card">
+                        <div class="balance-label">Ваш баланс</div>
+                        <div id="balance" class="balance-value">
+                            0<span>₽</span>
+                        </div>
+                        <button class="topup-btn" onclick="openTopupModal()">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Пополнить баланс
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Menu Section -->
+                <div class="menu-section">
+                    <div class="menu-title">Настройки</div>
+                    <div class="menu-list">
+                        <div class="menu-item" onclick="showSubscription()">
+                            <div class="menu-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <rect
+                                        x="3"
+                                        y="4"
+                                        width="18"
+                                        height="18"
+                                        rx="2"
+                                        ry="2"
+                                    />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                            </div>
+                            <div class="menu-content">
+                                <h4>Подписка</h4>
+                                <p>Управление подпиской VPN</p>
+                            </div>
+                            <div class="menu-arrow">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="menu-item" onclick="showHistory()">
+                            <div class="menu-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                            </div>
+                            <div class="menu-content">
+                                <h4>История</h4>
+                                <p>Транзакции и платежи</p>
+                            </div>
+                            <div class="menu-arrow">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="menu-item" onclick="showReferral()">
+                            <div class="menu-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+                                    />
+                                    <circle cx="9" cy="7" r="4" />
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                </svg>
+                            </div>
+                            <div class="menu-content">
+                                <h4>Рефералы</h4>
+                                <p>Приглашай друзей — получай бонусы</p>
+                            </div>
+                            <div class="menu-arrow">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="menu-item" onclick="showSupport()">
+                            <div class="menu-icon">
+                                <svg viewBox="0 0 24 24">
+                                    <path
+                                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="menu-content">
+                                <h4>Поддержка</h4>
+                                <p>Связаться с нами</p>
+                            </div>
+                            <div class="menu-arrow">
+                                <svg viewBox="0 0 24 24">
+                                    <polyline points="9 18 15 12 9 6" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Topup Modal -->
+        <div id="topup-modal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Пополнение баланса</h3>
+                    <button class="modal-close" onclick="closeTopupModal()">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="amount-grid">
+                        <div
+                            class="amount-option"
+                            data-amount="100"
+                            onclick="selectAmount(this)"
+                        >
+                            <div class="amount">100₽</div>
+                            <div class="days">~16 дней</div>
+                        </div>
+                        <div
+                            class="amount-option selected"
+                            data-amount="300"
+                            onclick="selectAmount(this)"
+                        >
+                            <div class="amount">300₽</div>
+                            <div class="days">~50 дней</div>
+                        </div>
+                        <div
+                            class="amount-option"
+                            data-amount="500"
+                            onclick="selectAmount(this)"
+                        >
+                            <div class="amount">500₽</div>
+                            <div class="days">~83 дня</div>
+                        </div>
+                        <div
+                            class="amount-option"
+                            data-amount="1000"
+                            onclick="selectAmount(this)"
+                        >
+                            <div class="amount">1000₽</div>
+                            <div class="days">~166 дней</div>
+                        </div>
+                        <div
+                            class="amount-option"
+                            data-amount="2000"
+                            onclick="selectAmount(this)"
+                        >
+                            <div class="amount">2000₽</div>
+                            <div class="days">~333 дня</div>
+                        </div>
+                        <div
+                            class="amount-option"
+                            data-amount="5000"
+                            onclick="selectAmount(this)"
+                        >
+                            <div class="amount">5000₽</div>
+                            <div class="days">~833 дня</div>
+                        </div>
+                    </div>
+                    <button class="topup-btn" onclick="processPayment()">
+                        <svg viewBox="0 0 24 24">
+                            <rect
+                                x="1"
+                                y="4"
+                                width="22"
+                                height="16"
+                                rx="2"
+                                ry="2"
+                            />
+                            <line x1="1" y1="10" x2="23" y2="10" />
+                        </svg>
+                        Оплатить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Telegram WebApp
+            const tg = window.Telegram?.WebApp;
+            let userData = null;
+            let selectedAmount = 300;
+
+            // Initialize
+            document.addEventListener("DOMContentLoaded", async () => {
+                if (tg) {
+                    tg.ready();
+                    tg.expand();
+                    tg.setHeaderColor("#0f0f0f");
+                    tg.setBackgroundColor("#0f0f0f");
+
+                    // Apply Telegram theme
+                    if (tg.themeParams) {
+                        document.documentElement.style.setProperty(
+                            "--tg-theme-bg-color",
+                            tg.themeParams.bg_color || "#0f0f0f",
+                        );
+                        document.documentElement.style.setProperty(
+                            "--tg-theme-text-color",
+                            tg.themeParams.text_color || "#ffffff",
+                        );
+                        document.documentElement.style.setProperty(
+                            "--tg-theme-hint-color",
+                            tg.themeParams.hint_color || "#8b8b8b",
+                        );
+                        document.documentElement.style.setProperty(
+                            "--tg-theme-secondary-bg-color",
+                            tg.themeParams.secondary_bg_color || "#1a1a1a",
+                        );
+                    }
+                }
+
+                await loadUserData();
+            });
+
+            async function loadUserData() {
+                try {
+                    let telegramId = null;
+
+                    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                        telegramId = tg.initDataUnsafe.user.id;
+                    }
+
+                    // For testing without Telegram
+                    if (!telegramId) {
+                        telegramId =
+                            new URLSearchParams(window.location.search).get(
+                                "user_id",
+                            ) || 123456789;
+                    }
+
+                    const response = await fetch(`/api/user/${telegramId}`);
+
+                    if (response.ok) {
+                        userData = await response.json();
+                        updateUI();
+                    } else {
+                        // User not found - show demo data
+                        userData = {
+                            telegram_id: telegramId,
+                            username:
+                                tg?.initDataUnsafe?.user?.username || "User",
+                            balance: 0,
+                            subscription: null,
+                            trial_used: false,
+                        };
+                        updateUI();
+                    }
+                } catch (error) {
+                    console.error("Error loading user data:", error);
+                    // Show demo data on error
+                    userData = {
+                        telegram_id: 0,
+                        username: "Demo User",
+                        balance: 150,
+                        subscription: {
+                            status: "active",
+                            expires_at: new Date(
+                                Date.now() + 7 * 24 * 60 * 60 * 1000,
+                            ).toISOString(),
+                            days_paid: 7,
+                            daily_price: 6.0,
+                        },
+                        trial_used: true,
+                    };
+                    updateUI();
+                }
+
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("content").classList.remove("hidden");
+            }
+
+            function updateUI() {
+                if (!userData) return;
+
+                // Username
+                const usernameEl = document.getElementById("username");
+                usernameEl.textContent = userData.username
+                    ? `@${userData.username}`
+                    : "Пользователь";
+
+                // Balance
+                const balanceEl = document.getElementById("balance");
+                balanceEl.innerHTML = `${Math.floor(userData.balance)}<span>₽</span>`;
+
+                // Subscription status
+                const statusBadge = document.getElementById("status-badge");
+                const daysLeft = document.getElementById("days-left");
+                const dailyPrice = document.getElementById("daily-price");
+
+                if (userData.subscription) {
+                    const sub = userData.subscription;
+                    dailyPrice.textContent = `${sub.daily_price}₽`;
+
+                    if (sub.status === "active") {
+                        statusBadge.className = "status-badge active";
+                        statusBadge.innerHTML =
+                            '<div class="status-dot"></div><span>Активна</span>';
+
+                        if (sub.expires_at) {
+                            const expires = new Date(sub.expires_at);
+                            const now = new Date();
+                            const diffDays = Math.ceil(
+                                (expires - now) / (1000 * 60 * 60 * 24),
+                            );
+                            daysLeft.textContent = Math.max(0, diffDays);
+                        } else {
+                            daysLeft.textContent = sub.days_paid || 0;
+                        }
+                    } else if (sub.status === "trial") {
+                        statusBadge.className = "status-badge trial";
+                        statusBadge.innerHTML =
+                            '<div class="status-dot"></div><span>Пробный период</span>';
+                        daysLeft.textContent = "1";
+                    } else {
+                        statusBadge.className = "status-badge inactive";
+                        statusBadge.innerHTML =
+                            '<div class="status-dot"></div><span>Неактивна</span>';
+                        daysLeft.textContent = "0";
+                    }
+                } else {
+                    statusBadge.className = "status-badge inactive";
+                    statusBadge.innerHTML =
+                        '<div class="status-dot"></div><span>Неактивна</span>';
+                    daysLeft.textContent = "0";
+                    dailyPrice.textContent = "6₽";
+                }
+            }
+
+            // Modal functions
+            function openTopupModal() {
+                document.getElementById("topup-modal").classList.add("active");
+                if (tg) tg.HapticFeedback?.impactOccurred("light");
+            }
+
+            function closeTopupModal() {
+                document
+                    .getElementById("topup-modal")
+                    .classList.remove("active");
+            }
+
+            function selectAmount(element) {
+                document
+                    .querySelectorAll(".amount-option")
+                    .forEach((el) => el.classList.remove("selected"));
+                element.classList.add("selected");
+                selectedAmount = parseInt(element.dataset.amount);
+                if (tg) tg.HapticFeedback?.selectionChanged();
+            }
+
+            async function processPayment() {
+                if (tg) tg.HapticFeedback?.impactOccurred("medium");
                 
-                if (data.error) {
-                    document.getElementById('content').innerHTML = `<p>${data.error}</p>`;
+                if (!userData || !userData.telegram_id) {
+                    if (tg) tg.showAlert("Ошибка: пользователь не найден");
                     return;
                 }
                 
-                document.getElementById('content').innerHTML = `
-                    <div class="card">
-                        <div class="card-title">Баланс</div>
-                        <div class="card-value">${data.balance?.toFixed(2) || '0.00'}₽</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-title">Статус подписки</div>
-                        <div class="card-value">${data.subscription_status || 'Неактивна'}</div>
-                    </div>
-                    <button class="btn" onclick="tg.close()">Закрыть</button>
-                `;
-            } catch (e) {
-                document.getElementById('content').innerHTML = '<p>Ошибка загрузки</p>';
+                try {
+                    const response = await fetch("/api/payment/create", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            telegram_id: userData.telegram_id,
+                            amount: selectedAmount
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.payment_url) {
+                        closeTopupModal();
+                        if (tg) {
+                            tg.openLink(data.payment_url);
+                        } else {
+                            window.open(data.payment_url, "_blank");
+                        }
+                    } else {
+                        if (tg) tg.showAlert(data.error || "Ошибка создания платежа");
+                        else alert(data.error || "Ошибка создания платежа");
+                    }
+                } catch (error) {
+                    console.error("Payment error:", error);
+                    if (tg) tg.showAlert("Ошибка соединения с сервером");
+                    else alert("Ошибка соединения с сервером");
+                }
             }
-        }
-        
-        loadUser();
-    </script>
-</body>
+
+            async function activateTrial() {
+                if (tg) tg.HapticFeedback?.impactOccurred("medium");
+
+                if (userData && userData.trial_used) {
+                    if (tg) tg.showAlert("Пробный период уже был использован");
+                    else alert("Пробный период уже был использован");
+                    return;
+                }
+
+                const doActivate = async () => {
+                    try {
+                        const response = await fetch("/api/trial/activate", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ telegram_id: userData.telegram_id })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.status === "ok") {
+                            userData.trial_used = true;
+                            if (tg) tg.showAlert("✅ Пробный период активирован! Ключ доступа отправлен в бот.");
+                            else alert("Пробный период активирован!");
+                            await loadUserData();
+                        } else {
+                            if (tg) tg.showAlert(data.error || "Ошибка активации");
+                            else alert(data.error || "Ошибка активации");
+                        }
+                    } catch (error) {
+                        console.error("Trial activation error:", error);
+                        if (tg) tg.showAlert("Ошибка соединения с сервером");
+                        else alert("Ошибка соединения с сервером");
+                    }
+                };
+
+                if (tg) {
+                    tg.showConfirm("Активировать пробный период?", (confirmed) => {
+                        if (confirmed) doActivate();
+                    });
+                } else {
+                    if (confirm("Активировать пробный период?")) doActivate();
+                }
+            }
+
+            async function showSubscription() {
+                if (tg) tg.HapticFeedback?.impactOccurred("light");
+                
+                if (!userData || !userData.subscription || userData.subscription.status === "inactive") {
+                    if (tg) tg.showAlert("У вас нет активной подписки");
+                    else alert("У вас нет активной подписки");
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/subscription/key/${userData.telegram_id}`);
+                    const data = await response.json();
+                    
+                    if (data.key) {
+                        if (tg) {
+                            tg.showPopup({
+                                title: "Ваш VPN ключ",
+                                message: data.key.substring(0, 50) + "...",
+                                buttons: [
+                                    { id: "copy", type: "default", text: "Скопировать" },
+                                    { id: "close", type: "cancel", text: "Закрыть" }
+                                ]
+                            }, (buttonId) => {
+                                if (buttonId === "copy") {
+                                    navigator.clipboard.writeText(data.key);
+                                    tg.showAlert("Ключ скопирован!");
+                                }
+                            });
+                        } else {
+                            navigator.clipboard.writeText(data.key);
+                            alert("Ключ скопирован: " + data.key);
+                        }
+                    } else {
+                        if (tg) tg.showAlert(data.error || "Ключ не найден");
+                        else alert(data.error || "Ключ не найден");
+                    }
+                } catch (error) {
+                    console.error("Key fetch error:", error);
+                    if (tg) tg.showAlert("Ошибка получения ключа");
+                }
+            }
+
+            function showHistory() {
+                if (tg) {
+                    tg.HapticFeedback?.impactOccurred("light");
+                    tg.showAlert("История транзакций скоро будет доступна");
+                }
+            }
+
+            function showReferral() {
+                if (tg) {
+                    tg.HapticFeedback?.impactOccurred("light");
+                    const botUsername = "harleyvpn_bot";
+                    const refLink = `https://t.me/${botUsername}?start=ref${userData?.telegram_id || ""}`;
+                    tg.showPopup({
+                        title: "Реферальная программа",
+                        message: "За каждого приглашенного друга вы получите бонус!",
+                        buttons: [
+                            { id: "copy", type: "default", text: "Скопировать ссылку" },
+                            { id: "share", type: "default", text: "Поделиться" },
+                            { id: "close", type: "cancel", text: "Закрыть" }
+                        ]
+                    }, (buttonId) => {
+                        if (buttonId === "copy") {
+                            navigator.clipboard.writeText(refLink);
+                            tg.showAlert("Ссылка скопирована!");
+                        } else if (buttonId === "share") {
+                            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Присоединяйся к VPN Keeper!")}`);
+                        }
+                    });
+                }
+            }
+
+            function showSupport() {
+                if (tg) {
+                    tg.HapticFeedback?.impactOccurred("light");
+                    tg.openTelegramLink("https://t.me/harleyvpn_support");
+                }
+            }
+
+            // Close modal on backdrop click
+            document
+                .getElementById("topup-modal")
+                .addEventListener("click", (e) => {
+                    if (e.target.classList.contains("modal-overlay")) {
+                        closeTopupModal();
+                    }
+                });
+        </script>
+    </body>
 </html>
