@@ -163,8 +163,13 @@ async def get_user_api(telegram_id: int):
                     if remnawave_user and remnawave_user.expire_at:
                         expires_at = remnawave_user.expire_at
                         now = datetime.utcnow()
-                        if expires_at > now:
-                            diff = expires_at - now
+                        # Make both timezone-naive for comparison
+                        if expires_at.tzinfo is not None:
+                            expires_at_naive = expires_at.replace(tzinfo=None)
+                        else:
+                            expires_at_naive = expires_at
+                        if expires_at_naive > now:
+                            diff = expires_at_naive - now
                             days_left = math.ceil(diff.total_seconds() / 86400)
                         else:
                             days_left = 0
