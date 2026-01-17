@@ -15,7 +15,17 @@ import uvicorn
 
 from app.config import settings
 from app.database.database import init_db, AsyncSessionLocal
-from app.handlers import start, profile, subscription, payment, admin
+from app.handlers import start, profile, subscription, payment
+from app.handlers.admin import main as admin_main
+from app.handlers.admin import (
+    monitoring, promocodes, users, subscriptions, tickets, 
+    statistics, blacklist, payments, referrals, servers,
+    maintenance, backups, promo_groups, promo_offers,
+    campaigns, messages, polls, contests, daily_contests,
+    welcome_text, faq, rules, privacy_policy, public_offer,
+    bot_configuration, tariffs, remnawave, system_logs, 
+    updates, reports, bulk_ban, trials, user_messages
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -57,7 +67,41 @@ async def start_bot():
     dp.include_router(profile.router)
     dp.include_router(subscription.router)
     dp.include_router(payment.router)
-    dp.include_router(admin.router)
+    
+    admin_main.register_handlers(dp)
+    monitoring.register_handlers(dp)
+    promocodes.register_handlers(dp)
+    users.register_handlers(dp)
+    subscriptions.register_handlers(dp)
+    tickets.register_handlers(dp)
+    statistics.register_handlers(dp)
+    blacklist.register_handlers(dp)
+    payments.register_handlers(dp)
+    referrals.register_handlers(dp)
+    servers.register_handlers(dp)
+    maintenance.register_handlers(dp)
+    backups.register_handlers(dp)
+    promo_groups.register_handlers(dp)
+    promo_offers.register_handlers(dp)
+    campaigns.register_handlers(dp)
+    messages.register_handlers(dp)
+    polls.register_handlers(dp)
+    contests.register_handlers(dp)
+    daily_contests.register_handlers(dp)
+    welcome_text.register_handlers(dp)
+    faq.register_handlers(dp)
+    rules.register_handlers(dp)
+    privacy_policy.register_handlers(dp)
+    public_offer.register_handlers(dp)
+    bot_configuration.register_handlers(dp)
+    tariffs.register_handlers(dp)
+    remnawave.register_handlers(dp)
+    system_logs.register_handlers(dp)
+    updates.register_handlers(dp)
+    reports.register_handlers(dp)
+    bulk_ban.register_handlers(dp)
+    trials.register_handlers(dp)
+    user_messages.register_handlers(dp)
     
     logger.info("Bot started polling...")
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
