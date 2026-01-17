@@ -317,6 +317,7 @@ async def get_subscription_key(telegram_id: int):
     """Get VPN subscription key for miniapp"""
     from app.database.crud.user import get_user_by_telegram_id
     from app.database.crud.subscription import get_subscription_by_user_id
+    from app.remnawave_api import RemnaWaveAPI
     
     async with AsyncSessionLocal() as db:
         user = await get_user_by_telegram_id(db, telegram_id)
@@ -327,11 +328,24 @@ async def get_subscription_key(telegram_id: int):
         if not subscription or subscription.status.value == "inactive":
             return JSONResponse({"error": "No active subscription"}, status_code=400)
         
-        return {
-            "status": "ok",
-            "key": subscription.subscription_key,
-            "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None
-        }
+        if not user.remnawave_uuid:
+            return JSONResponse({"error": "VPN key not configured"}, status_code=400)
+        
+        try:
+            api = RemnaWaveAPI()
+            remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
+            
+            if remnawave_user and remnawave_user.subscription_url:
+                return {
+                    "status": "ok",
+                    "key": remnawave_user.subscription_url,
+                    "expires_at": subscription.expires_at.isoformat() if subscription.expires_at else None
+                }
+            else:
+                return JSONResponse({"error": "VPN key not available"}, status_code=400)
+        except Exception as e:
+            logger.error(f"Error fetching VPN key: {e}")
+            return JSONResponse({"error": "Failed to fetch VPN key"}, status_code=500)
 
 
 if __name__ == "__main__":
