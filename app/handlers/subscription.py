@@ -185,13 +185,9 @@ async def callback_get_key(callback: CallbackQuery, db: AsyncSession):
         await callback.answer("Ошибка: пользователь не найден", show_alert=True)
         return
     
-    if not user.remnawave_uuid:
-        rw_data = await create_remnawave_user(user, db)
-        if not rw_data:
-            await callback.answer("Ошибка создания ключа. Попробуйте позже.", show_alert=True)
-            return
-        subscription_url = rw_data["subscription_url"]
-    else:
+    subscription_url = None
+    
+    if user.remnawave_uuid:
         try:
             async with RemnaWaveAPI(
                 settings.REMNAWAVE_URL,
@@ -201,9 +197,22 @@ async def callback_get_key(callback: CallbackQuery, db: AsyncSession):
                 info = await api.get_subscription_info(user.remnawave_short_uuid)
                 subscription_url = info.subscription_url
         except Exception as e:
-            logger.error(f"Error getting subscription info: {e}")
-            await callback.answer("Ошибка получения ключа. Попробуйте позже.", show_alert=True)
+            if "not found" in str(e).lower():
+                logger.info(f"User deleted from RemnaWave, recreating: {user.telegram_id}")
+                user.remnawave_uuid = None
+                user.remnawave_short_uuid = None
+                await db.commit()
+            else:
+                logger.error(f"Error getting subscription info: {e}")
+                await callback.answer("Ошибка получения ключа. Попробуйте позже.", show_alert=True)
+                return
+    
+    if not subscription_url:
+        rw_data = await create_remnawave_user(user, db, is_trial=False)
+        if not rw_data:
+            await callback.answer("Ошибка создания ключа. Попробуйте позже.", show_alert=True)
             return
+        subscription_url = rw_data["subscription_url"]
     
     text = get_text(
         "vpn_key",
@@ -221,26 +230,42 @@ async def callback_get_key(callback: CallbackQuery, db: AsyncSession):
 @router.callback_query(F.data == "refresh_key")
 async def callback_refresh_key(callback: CallbackQuery, db: AsyncSession):
     user = await get_user_by_telegram_id(db, callback.from_user.id)
-    if not user or not user.remnawave_uuid:
+    if not user:
         await callback.answer("Ключ не найден", show_alert=True)
         return
     
-    try:
-        async with RemnaWaveAPI(
-            settings.REMNAWAVE_URL,
-            settings.REMNAWAVE_API_KEY,
-            settings.REMNAWAVE_SECRET_KEY
-        ) as api:
-            await api.revoke_user_subscription(user.remnawave_uuid)
-            rw_user = await api.get_user_by_uuid(user.remnawave_uuid)
-            await update_user_remnawave(db, user.id, rw_user.uuid, rw_user.short_uuid)
-            
-            info = await api.get_subscription_info(rw_user.short_uuid)
-            subscription_url = info.subscription_url
-    except Exception as e:
-        logger.error(f"Error refreshing key: {e}")
-        await callback.answer("Ошибка обновления ключа", show_alert=True)
-        return
+    subscription_url = None
+    
+    if user.remnawave_uuid:
+        try:
+            async with RemnaWaveAPI(
+                settings.REMNAWAVE_URL,
+                settings.REMNAWAVE_API_KEY,
+                settings.REMNAWAVE_SECRET_KEY
+            ) as api:
+                await api.revoke_user_subscription(user.remnawave_uuid)
+                rw_user = await api.get_user_by_uuid(user.remnawave_uuid)
+                await update_user_remnawave(db, user.id, rw_user.uuid, rw_user.short_uuid)
+                
+                info = await api.get_subscription_info(rw_user.short_uuid)
+                subscription_url = info.subscription_url
+        except Exception as e:
+            if "not found" in str(e).lower():
+                logger.info(f"User deleted from RemnaWave, recreating: {user.telegram_id}")
+                user.remnawave_uuid = None
+                user.remnawave_short_uuid = None
+                await db.commit()
+            else:
+                logger.error(f"Error refreshing key: {e}")
+                await callback.answer("Ошибка обновления ключа", show_alert=True)
+                return
+    
+    if not subscription_url:
+        rw_data = await create_remnawave_user(user, db, is_trial=False)
+        if not rw_data:
+            await callback.answer("Ошибка создания ключа. Попробуйте позже.", show_alert=True)
+            return
+        subscription_url = rw_data["subscription_url"]
     
     text = get_text(
         "vpn_key",
