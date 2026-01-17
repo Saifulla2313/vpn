@@ -269,6 +269,12 @@ async def yookassa_webhook(request: Request):
                                 await update_user_balance(db, user.id, -cost)
                                 days_added = days_to_add
                                 logger.info(f"Extended subscription for user {user.telegram_id}: +{days_to_add} days, -{cost}₽")
+                                
+                                subscription = await get_subscription_by_user_id(db, user.id)
+                                if subscription and subscription.status == SubscriptionStatus.TRIAL:
+                                    subscription.status = SubscriptionStatus.ACTIVE
+                                    await db.commit()
+                                    logger.info(f"Changed subscription status from TRIAL to ACTIVE for user {user.telegram_id}")
                 except Exception as e:
                     logger.error(f"Failed to auto-extend subscription: {e}")
             
