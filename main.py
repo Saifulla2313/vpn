@@ -379,7 +379,25 @@ async def create_payment_api(request: Request):
                 "confirmation": {"type": "redirect", "return_url": f"https://t.me/{settings.BOT_USERNAME}"},
                 "capture": True,
                 "description": f"Пополнение VPN баланса - {amount}₽",
-                "metadata": {"telegram_id": telegram_id, "user_id": user.id}
+                "metadata": {"telegram_id": telegram_id, "user_id": user.id},
+                "receipt": {
+                    "customer": {
+                        "email": settings.YOOKASSA_DEFAULT_RECEIPT_EMAIL
+                    },
+                    "items": [
+                        {
+                            "description": "Пополнение баланса VPN",
+                            "quantity": "1.00",
+                            "amount": {
+                                "value": str(amount),
+                                "currency": "RUB"
+                            },
+                            "vat_code": settings.YOOKASSA_VAT_CODE,
+                            "payment_mode": settings.YOOKASSA_PAYMENT_MODE,
+                            "payment_subject": settings.YOOKASSA_PAYMENT_SUBJECT
+                        }
+                    ]
+                }
             }, idempotence_key)
             
             await create_transaction(

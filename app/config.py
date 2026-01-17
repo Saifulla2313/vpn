@@ -22,9 +22,9 @@ class Settings:
     YOOKASSA_SECRET_KEY: str = field(default_factory=lambda: os.getenv("YOOKASSA_SECRET_KEY", ""))
     YOOKASSA_RETURN_URL: Optional[str] = field(default_factory=lambda: os.getenv("YOOKASSA_RETURN_URL"))
     YOOKASSA_DEFAULT_RECEIPT_EMAIL: str = field(default_factory=lambda: os.getenv("YOOKASSA_DEFAULT_RECEIPT_EMAIL", "noreply@vpn.bot"))
-    YOOKASSA_VAT_CODE: int = 1
-    YOOKASSA_PAYMENT_MODE: str = "full_payment"
-    YOOKASSA_PAYMENT_SUBJECT: str = "service"
+    YOOKASSA_VAT_CODE: int = field(default_factory=lambda: int(os.getenv("YOOKASSA_VAT_CODE", "1")))
+    YOOKASSA_PAYMENT_MODE: str = field(default_factory=lambda: os.getenv("YOOKASSA_PAYMENT_MODE", "full_payment"))
+    YOOKASSA_PAYMENT_SUBJECT: str = field(default_factory=lambda: os.getenv("YOOKASSA_PAYMENT_SUBJECT", "service"))
     
     # Subscription pricing (rubles per day per device)
     SUBSCRIPTION_DAILY_PRICE: float = field(default_factory=lambda: float(os.getenv("SUBSCRIPTION_DAILY_PRICE", "6.0")))
