@@ -61,6 +61,36 @@ async def cmd_admin(message: Message, db: AsyncSession):
     await message.answer(text, reply_markup=get_admin_keyboard(), parse_mode="HTML")
 
 
+@router.callback_query(F.data == "admin_panel")
+async def callback_admin_panel(callback: CallbackQuery, db: AsyncSession):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Нет доступа", show_alert=True)
+        return
+    
+    result = await db.execute(select(func.count(User.id)))
+    users_count = result.scalar()
+    
+    result = await db.execute(
+        select(func.count(Subscription.id)).where(
+            Subscription.status == SubscriptionStatus.ACTIVE
+        )
+    )
+    active_count = result.scalar()
+    
+    result = await db.execute(select(func.sum(User.balance)))
+    total_balance = result.scalar() or 0.0
+    
+    text = get_text(
+        "admin_panel",
+        users_count=users_count,
+        active_count=active_count,
+        total_balance=total_balance
+    )
+    
+    await callback.message.edit_text(text, reply_markup=get_admin_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+
 @router.callback_query(F.data == "admin_stats")
 async def callback_admin_stats(callback: CallbackQuery, db: AsyncSession):
     if not is_admin(callback.from_user.id):

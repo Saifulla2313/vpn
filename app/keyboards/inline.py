@@ -1,8 +1,9 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from typing import Optional
+from app.config import settings
 
 
-def get_main_menu_keyboard(webapp_url: Optional[str] = None) -> InlineKeyboardMarkup:
+def get_main_menu_keyboard(webapp_url: Optional[str] = None, user_id: Optional[int] = None) -> InlineKeyboardMarkup:
     buttons = []
     
     if webapp_url:
@@ -20,6 +21,11 @@ def get_main_menu_keyboard(webapp_url: Optional[str] = None) -> InlineKeyboardMa
             InlineKeyboardButton(text="❓ Помощь", callback_data="help")
         ]
     ])
+    
+    if user_id and settings.is_admin(user_id):
+        buttons.append([
+            InlineKeyboardButton(text="🛠 Админ панель", callback_data="admin_panel")
+        ])
     
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 

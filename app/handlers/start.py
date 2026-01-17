@@ -52,7 +52,7 @@ async def cmd_start(message: Message, db: AsyncSession):
     
     await message.answer(
         get_text("welcome"),
-        reply_markup=get_main_menu_keyboard(webapp_url),
+        reply_markup=get_main_menu_keyboard(webapp_url, user_id=telegram_id),
         parse_mode="HTML"
     )
 
@@ -63,7 +63,7 @@ async def back_to_menu(callback: CallbackQuery):
     
     await callback.message.edit_text(
         get_text("welcome"),
-        reply_markup=get_main_menu_keyboard(webapp_url),
+        reply_markup=get_main_menu_keyboard(webapp_url, user_id=callback.from_user.id),
         parse_mode="HTML"
     )
     await callback.answer()
