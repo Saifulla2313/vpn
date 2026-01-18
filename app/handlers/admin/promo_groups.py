@@ -451,7 +451,7 @@ async def show_promo_groups_menu(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     groups = await get_promo_groups_with_counts(db)
 
     total_members = sum(count for _, count in groups)
@@ -483,7 +483,7 @@ async def show_promo_groups_menu(
                 ).format(count=member_count)
             )
 
-            period_lines = _format_period_discounts_lines(texts, group, db_user.language)
+            period_lines = _format_period_discounts_lines(texts, group, db_user.language_code)
             group_lines.extend(period_lines)
             group_lines.append("")
 
@@ -536,7 +536,7 @@ async def show_promo_group_details(
     if not group:
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     member_count = await count_promo_group_members(db, group.id)
 
     default_note = (
@@ -560,7 +560,7 @@ async def show_promo_group_details(
         ).format(count=member_count)
     )
 
-    period_lines = _format_period_discounts_lines(texts, group, db_user.language)
+    period_lines = _format_period_discounts_lines(texts, group, db_user.language_code)
     lines.extend(period_lines)
 
     if default_note:
@@ -636,9 +636,9 @@ async def start_create_promo_group(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await state.set_state(AdminStates.creating_promo_group_name)
-    await state.update_data(language=db_user.language)
+    await state.update_data(language=db_user.language_code)
     await callback.message.edit_text(
         texts.t("ADMIN_PROMO_GROUP_CREATE_NAME_PROMPT", "Введите название новой промогруппы:"),
         reply_markup=types.InlineKeyboardMarkup(
@@ -738,7 +738,7 @@ async def process_create_group_devices(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         devices_discount = _validate_percent(message.text)
@@ -766,7 +766,7 @@ async def process_create_group_period_discounts(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         period_discounts = _parse_period_discounts_input(message.text)
@@ -799,7 +799,7 @@ async def process_create_group_auto_assign(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         auto_assign_kopeks = _parse_auto_assign_threshold_input(message.text)
@@ -862,11 +862,11 @@ async def start_edit_promo_group(
     if not group:
         return
 
-    texts = get_texts(db_user.language)
-    await state.update_data(edit_group_id=group.id, language=db_user.language)
+    texts = get_texts(db_user.language_code)
+    await state.update_data(edit_group_id=group.id, language=db_user.language_code)
     await state.set_state(AdminStates.editing_promo_group_menu)
 
-    text, keyboard = _build_edit_menu_content(texts, group, db_user.language)
+    text, keyboard = _build_edit_menu_content(texts, group, db_user.language_code)
     await callback.message.edit_text(
         text,
         reply_markup=keyboard,
@@ -896,9 +896,9 @@ async def prompt_edit_promo_group_field(
         await callback.answer("❌ Промогруппа не найдена", show_alert=True)
         return
 
-    await state.update_data(edit_group_id=group.id, language=db_user.language)
+    await state.update_data(edit_group_id=group.id, language=db_user.language_code)
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     reply_markup = _get_edit_prompt_keyboard(group.id, texts)
 
     if field == "name":
@@ -961,7 +961,7 @@ async def process_edit_group_name(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     name = message.text.strip()
     if not name:
@@ -981,7 +981,7 @@ async def process_edit_group_name(
         message,
         texts,
         group,
-        data.get("language", db_user.language),
+        data.get("language", db_user.language_code),
         texts.t("ADMIN_PROMO_GROUP_UPDATED", "Промогруппа «{name}» обновлена.").format(name=group.name),
     )
 
@@ -995,7 +995,7 @@ async def process_edit_group_priority(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         priority = int(message.text)
@@ -1023,7 +1023,7 @@ async def process_edit_group_priority(
         message,
         texts,
         group,
-        data.get("language", db_user.language),
+        data.get("language", db_user.language_code),
         texts.t("ADMIN_PROMO_GROUP_UPDATED", "Промогруппа «{name}» обновлена.").format(name=group.name),
     )
 
@@ -1037,7 +1037,7 @@ async def process_edit_group_traffic(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         value = _validate_percent(message.text)
@@ -1058,7 +1058,7 @@ async def process_edit_group_traffic(
         message,
         texts,
         group,
-        data.get("language", db_user.language),
+        data.get("language", db_user.language_code),
         texts.t("ADMIN_PROMO_GROUP_UPDATED", "Промогруппа «{name}» обновлена.").format(name=group.name),
     )
 
@@ -1072,7 +1072,7 @@ async def process_edit_group_servers(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         value = _validate_percent(message.text)
@@ -1093,7 +1093,7 @@ async def process_edit_group_servers(
         message,
         texts,
         group,
-        data.get("language", db_user.language),
+        data.get("language", db_user.language_code),
         texts.t("ADMIN_PROMO_GROUP_UPDATED", "Промогруппа «{name}» обновлена.").format(name=group.name),
     )
 
@@ -1107,7 +1107,7 @@ async def process_edit_group_devices(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         devices_discount = _validate_percent(message.text)
@@ -1128,7 +1128,7 @@ async def process_edit_group_devices(
         message,
         texts,
         group,
-        data.get("language", db_user.language),
+        data.get("language", db_user.language_code),
         texts.t("ADMIN_PROMO_GROUP_UPDATED", "Промогруппа «{name}» обновлена.").format(name=group.name),
     )
 
@@ -1142,7 +1142,7 @@ async def process_edit_group_period_discounts(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         period_discounts = _parse_period_discounts_input(message.text)
@@ -1168,7 +1168,7 @@ async def process_edit_group_period_discounts(
         message,
         texts,
         group,
-        data.get("language", db_user.language),
+        data.get("language", db_user.language_code),
         texts.t("ADMIN_PROMO_GROUP_UPDATED", "Промогруппа «{name}» обновлена.").format(name=group.name),
     )
 
@@ -1182,7 +1182,7 @@ async def process_edit_group_auto_assign(
     db: AsyncSession,
 ):
     data = await state.get_data()
-    texts = get_texts(data.get("language", db_user.language))
+    texts = get_texts(data.get("language", db_user.language_code))
 
     try:
         auto_assign_kopeks = _parse_auto_assign_threshold_input(message.text)
@@ -1212,7 +1212,7 @@ async def process_edit_group_auto_assign(
         message,
         texts,
         group,
-        data.get("language", db_user.language),
+        data.get("language", db_user.language_code),
         texts.t("ADMIN_PROMO_GROUP_UPDATED", "Промогруппа «{name}» обновлена.").format(name=group.name),
     )
 
@@ -1235,7 +1235,7 @@ async def show_promo_group_members(
         await callback.answer("❌ Промогруппа не найдена", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     members = await get_promo_group_members(db, group_id, offset=offset, limit=limit)
     total_members = await count_promo_group_members(db, group_id)
     total_pages = max(1, (total_members + limit - 1) // limit)
@@ -1264,7 +1264,7 @@ async def show_promo_group_members(
             total_pages,
             f"promo_group_members_{group_id}",
             f"promo_group_manage_{group_id}",
-            db_user.language,
+            db_user.language_code,
         )
         keyboard.extend(pagination.inline_keyboard)
 
@@ -1291,7 +1291,7 @@ async def request_delete_promo_group(
     if not group:
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if group.is_default:
         await callback.answer(
@@ -1310,7 +1310,7 @@ async def request_delete_promo_group(
         reply_markup=get_confirmation_keyboard(
             confirm_action=f"promo_group_delete_confirm_{group.id}",
             cancel_action=f"promo_group_manage_{group.id}",
-            language=db_user.language,
+            language=db_user.language_code,
         ),
     )
     await callback.answer()
@@ -1327,7 +1327,7 @@ async def delete_promo_group_confirmed(
     if not group:
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     success = await delete_promo_group(db, group)
     if not success:
@@ -1359,7 +1359,7 @@ async def toggle_promo_group_addon_discounts(
     if not group:
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     new_value = not getattr(group, "apply_discounts_to_addons", True)
 
@@ -1380,7 +1380,7 @@ async def toggle_promo_group_addon_discounts(
         callback.message,
         texts,
         group,
-        db_user.language,
+        db_user.language_code,
         status_text,
     )
 

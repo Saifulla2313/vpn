@@ -1655,7 +1655,7 @@ async def show_bot_config_category(
         category_key,
         group_key,
         category_page,
-        db_user.language,
+        db_user.language_code,
         settings_page,
     )
     text_lines = [
@@ -1930,7 +1930,7 @@ async def test_remnawave_connection(
             category_key,
             group_key,
             category_page,
-            db_user.language,
+            db_user.language_code,
             settings_page,
         )
         try:
@@ -1964,7 +1964,7 @@ async def test_payment_provider(
     except ValueError:
         settings_page = 1
 
-    language = db_user.language
+    language = db_user.language_code
     texts = get_texts(language)
     payment_service = PaymentService(callback.bot)
 
@@ -2348,7 +2348,7 @@ async def test_payment_provider(
             amount_kopeks=amount_kopeks,
             description="Тестовый платеж Freekassa (админ)",
             email=getattr(db_user, "email", None),
-            language=db_user.language or settings.DEFAULT_LANGUAGE,
+            language=db_user.language_code or settings.DEFAULT_LANGUAGE,
         )
 
         if not payment_result or not payment_result.get("payment_url"):
@@ -2448,7 +2448,7 @@ async def start_edit_setting(
     definition = bot_configuration_service.get_definition(key)
 
     summary = bot_configuration_service.get_setting_summary(key)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     instructions = [
         "✏️ <b>Редактирование настройки</b>",

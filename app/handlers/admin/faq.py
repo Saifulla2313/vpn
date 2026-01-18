@@ -29,18 +29,18 @@ async def _build_overview(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
-    normalized_language = FaqService.normalize_language(db_user.language)
+    normalized_language = FaqService.normalize_language(db_user.language_code)
     setting = await FaqService.get_setting(
         db,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
     )
 
     pages = await FaqService.get_pages(
         db,
-        db_user.language,
+        db_user.language_code,
         include_inactive=True,
         fallback=False,
     )
@@ -220,8 +220,8 @@ async def toggle_faq(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
-    setting = await FaqService.toggle_enabled(db, db_user.language)
+    texts = get_texts(db_user.language_code)
+    setting = await FaqService.toggle_enabled(db, db_user.language_code)
 
     if setting.is_enabled:
         alert_text = texts.t(
@@ -251,10 +251,10 @@ async def start_create_faq_page(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await state.set_state(AdminStates.creating_faq_title)
-    await state.update_data(faq_language=db_user.language)
+    await state.update_data(faq_language=db_user.language_code)
 
     await callback.message.edit_text(
         texts.t(
@@ -298,7 +298,7 @@ async def process_new_faq_title(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     title = (message.text or "").strip()
 
     if not title:
@@ -338,7 +338,7 @@ async def process_new_faq_content(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     content = message.text or ""
 
     if len(content) > 6000:
@@ -371,7 +371,7 @@ async def process_new_faq_content(
 
     data = await state.get_data()
     title = data.get("faq_title") or texts.t("FAQ_PAGE_UNTITLED", "Без названия")
-    language = data.get("faq_language", db_user.language)
+    language = data.get("faq_language", db_user.language_code)
 
     await FaqService.create_page(
         db,
@@ -417,7 +417,7 @@ async def show_faq_page_details(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     raw_id = (callback.data or "").split(":", 1)[-1]
     try:
@@ -429,7 +429,7 @@ async def show_faq_page_details(
     page = await FaqService.get_page(
         db,
         page_id,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
         include_inactive=True,
     )
@@ -563,7 +563,7 @@ async def start_edit_faq_title(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     raw_id = (callback.data or "").split(":", 1)[-1]
     try:
@@ -575,7 +575,7 @@ async def start_edit_faq_title(
     page = await FaqService.get_page(
         db,
         page_id,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
         include_inactive=True,
     )
@@ -623,7 +623,7 @@ async def process_edit_faq_title(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     title = (message.text or "").strip()
 
     if not title:
@@ -655,7 +655,7 @@ async def process_edit_faq_title(
     page = await FaqService.get_page(
         db,
         page_id,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
         include_inactive=True,
     )
@@ -689,7 +689,7 @@ async def start_edit_faq_content(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     raw_id = (callback.data or "").split(":", 1)[-1]
     try:
@@ -701,7 +701,7 @@ async def start_edit_faq_content(
     page = await FaqService.get_page(
         db,
         page_id,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
         include_inactive=True,
     )
@@ -746,7 +746,7 @@ async def process_edit_faq_content(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     content = message.text or ""
 
     if len(content) > 6000:
@@ -788,7 +788,7 @@ async def process_edit_faq_content(
     page = await FaqService.get_page(
         db,
         page_id,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
         include_inactive=True,
     )
@@ -821,7 +821,7 @@ async def toggle_faq_page(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     parts = (callback.data or "").split(":")
     try:
@@ -833,7 +833,7 @@ async def toggle_faq_page(
     page = await FaqService.get_page(
         db,
         page_id,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
         include_inactive=True,
     )
@@ -868,7 +868,7 @@ async def delete_faq_page(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     parts = (callback.data or "").split(":")
     try:
@@ -880,7 +880,7 @@ async def delete_faq_page(
     page = await FaqService.get_page(
         db,
         page_id,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
         include_inactive=True,
     )
@@ -896,7 +896,7 @@ async def delete_faq_page(
 
     remaining_pages = await FaqService.get_pages(
         db,
-        db_user.language,
+        db_user.language_code,
         include_inactive=True,
         fallback=False,
     )
@@ -906,7 +906,7 @@ async def delete_faq_page(
             remaining_pages,
             key=lambda item: (item.display_order, item.id),
         )
-        await FaqService.reorder_pages(db, db_user.language, remaining_sorted)
+        await FaqService.reorder_pages(db, db_user.language_code, remaining_sorted)
 
     await callback.answer(
         texts.t("ADMIN_FAQ_PAGE_DELETED", "🗑️ Страница удалена."),
@@ -923,7 +923,7 @@ async def move_faq_page(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     parts = (callback.data or "").split(":")
     try:
@@ -935,7 +935,7 @@ async def move_faq_page(
 
     pages = await FaqService.get_pages(
         db,
-        db_user.language,
+        db_user.language_code,
         include_inactive=True,
         fallback=False,
     )
@@ -966,7 +966,7 @@ async def move_faq_page(
         await callback.answer()
         return
 
-    await FaqService.reorder_pages(db, db_user.language, pages_sorted)
+    await FaqService.reorder_pages(db, db_user.language_code, pages_sorted)
 
     await callback.answer(
         texts.t("ADMIN_FAQ_PAGE_REORDERED", "✅ Порядок обновлён."),
@@ -983,7 +983,7 @@ async def show_faq_html_help(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     help_text = get_html_help_text()
 
     buttons = [[

@@ -163,7 +163,7 @@ async def show_campaigns_menu(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     overview = await get_campaigns_overview(db)
 
     text = (
@@ -177,7 +177,7 @@ async def show_campaigns_menu(
 
     await callback.message.edit_text(
         text,
-        reply_markup=get_admin_campaigns_keyboard(db_user.language),
+        reply_markup=get_admin_campaigns_keyboard(db_user.language_code),
     )
     await callback.answer()
 
@@ -189,7 +189,7 @@ async def show_campaigns_overall_stats(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     overview = await get_campaigns_overview(db)
 
     text = ["📊 <b>Общая статистика кампаний</b>\n"]
@@ -225,7 +225,7 @@ async def show_campaigns_list(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     page = 1
     if callback.data.startswith("admin_campaigns_list_page_"):
@@ -297,7 +297,7 @@ async def show_campaigns_list(
         total_pages=total_pages,
         callback_prefix="admin_campaigns_list",
         back_callback="admin_campaigns",
-        language=db_user.language,
+        language=db_user.language_code,
     )
 
     keyboard_rows.extend(pagination.inline_keyboard)
@@ -323,7 +323,7 @@ async def show_campaign_detail(
         await callback.answer("❌ Кампания не найдена", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     stats = await get_campaign_statistics(db, campaign_id)
     deep_link = await _get_bot_deep_link(callback, campaign.start_parameter)
 
@@ -373,7 +373,7 @@ async def show_campaign_detail(
     await callback.message.edit_text(
         "\n".join(text),
         reply_markup=get_campaign_management_keyboard(
-            campaign.id, campaign.is_active, db_user.language
+            campaign.id, campaign.is_active, db_user.language_code
         ),
     )
     await callback.answer()
@@ -404,7 +404,7 @@ async def show_campaign_edit_menu(
         callback.message.chat.id,
         callback.message.message_id,
         campaign,
-        db_user.language,
+        db_user.language_code,
         use_caption=use_caption,
     )
     await callback.answer()
@@ -494,7 +494,7 @@ async def process_edit_campaign_name(
             message.chat.id,
             edit_message_id,
             campaign,
-            db_user.language,
+            db_user.language_code,
             use_caption=edit_message_is_caption,
         )
 
@@ -588,7 +588,7 @@ async def process_edit_campaign_start_parameter(
             message.chat.id,
             edit_message_id,
             campaign,
-            db_user.language,
+            db_user.language_code,
             use_caption=edit_message_is_caption,
         )
 
@@ -623,7 +623,7 @@ async def start_edit_campaign_balance_bonus(
     await callback.message.edit_text(
         (
             "💰 <b>Изменение бонуса на баланс</b>\n\n"
-            f"Текущий бонус: <b>{get_texts(db_user.language).format_price(campaign.balance_bonus_kopeks)}</b>\n"
+            f"Текущий бонус: <b>{get_texts(db_user.language_code).format_price(campaign.balance_bonus_kopeks)}</b>\n"
             "Введите новую сумму в рублях (например, 100 или 99.5):"
         ),
         reply_markup=types.InlineKeyboardMarkup(
@@ -691,7 +691,7 @@ async def process_edit_campaign_balance_bonus(
             message.chat.id,
             edit_message_id,
             campaign,
-            db_user.language,
+            db_user.language_code,
             use_caption=edit_message_is_caption,
         )
 
@@ -805,7 +805,7 @@ async def process_edit_campaign_subscription_days(
             message.chat.id,
             edit_message_id,
             campaign,
-            db_user.language,
+            db_user.language_code,
             use_caption=edit_message_is_caption,
         )
 
@@ -907,7 +907,7 @@ async def process_edit_campaign_subscription_traffic(
             message.chat.id,
             edit_message_id,
             campaign,
-            db_user.language,
+            db_user.language_code,
             use_caption=edit_message_is_caption,
         )
 
@@ -1012,7 +1012,7 @@ async def process_edit_campaign_subscription_devices(
             message.chat.id,
             edit_message_id,
             campaign,
-            db_user.language,
+            db_user.language_code,
             use_caption=edit_message_is_caption,
         )
 
@@ -1162,7 +1162,7 @@ async def save_edit_campaign_subscription_servers(
         callback.message.chat.id,
         callback.message.message_id,
         campaign,
-        db_user.language,
+        db_user.language_code,
         use_caption=use_caption,
     )
     await callback.answer("✅ Сохранено")
@@ -1202,7 +1202,7 @@ async def show_campaign_stats(
         await callback.answer("❌ Кампания не найдена", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     stats = await get_campaign_statistics(db, campaign_id)
 
     text = ["📊 <b>Статистика кампании</b>\n"]
@@ -1277,7 +1277,7 @@ async def delete_campaign_confirmed(
     await delete_campaign(db, campaign)
     await callback.message.edit_text(
         "✅ Кампания удалена.",
-        reply_markup=get_admin_campaigns_keyboard(db_user.language),
+        reply_markup=get_admin_campaigns_keyboard(db_user.language_code),
     )
     await callback.answer("Удалено")
 
@@ -1355,7 +1355,7 @@ async def process_campaign_start_parameter(
     await state.set_state(AdminStates.creating_campaign_bonus)
     await message.answer(
         "🎯 Выберите тип бонуса для кампании:",
-        reply_markup=get_campaign_bonus_type_keyboard(db_user.language),
+        reply_markup=get_campaign_bonus_type_keyboard(db_user.language_code),
     )
 
 
@@ -1434,7 +1434,7 @@ async def process_campaign_balance_value(
     await state.clear()
 
     deep_link = await _get_bot_deep_link_from_message(message, campaign.start_parameter)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     summary = _format_campaign_summary(campaign, texts)
     text = (
         "✅ <b>Кампания создана!</b>\n\n"
@@ -1445,7 +1445,7 @@ async def process_campaign_balance_value(
     await message.answer(
         text,
         reply_markup=get_campaign_management_keyboard(
-            campaign.id, campaign.is_active, db_user.language
+            campaign.id, campaign.is_active, db_user.language_code
         ),
     )
 
@@ -1598,7 +1598,7 @@ async def finalize_campaign_subscription(
     await state.clear()
 
     deep_link = await _get_bot_deep_link(callback, campaign.start_parameter)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     summary = _format_campaign_summary(campaign, texts)
     text = (
         "✅ <b>Кампания создана!</b>\n\n"
@@ -1609,7 +1609,7 @@ async def finalize_campaign_subscription(
     await callback.message.edit_text(
         text,
         reply_markup=get_campaign_management_keyboard(
-            campaign.id, campaign.is_active, db_user.language
+            campaign.id, campaign.is_active, db_user.language_code
         ),
     )
     await callback.answer()

@@ -279,7 +279,7 @@ async def _show_users_list_filtered(
     if not users:
         await callback.message.edit_text(
             config.empty_message,
-            reply_markup=get_admin_users_keyboard(db_user.language)
+            reply_markup=get_admin_users_keyboard(db_user.language_code)
         )
         await callback.answer()
         return
@@ -297,7 +297,7 @@ async def _show_users_list_filtered(
     # Формируем клавиатуру
     keyboard = []
     for user in users:
-        button_text = _build_user_button_text(user, filter_type, extra_data, db_user.language)
+        button_text = _build_user_button_text(user, filter_type, extra_data, db_user.language_code)
         keyboard.append([
             types.InlineKeyboardButton(
                 text=button_text,
@@ -312,7 +312,7 @@ async def _show_users_list_filtered(
             users_data["total_pages"],
             config.pagination_prefix,
             "admin_users",
-            db_user.language
+            db_user.language_code
         ).inline_keyboard[0]
         keyboard.append(pagination_row)
 
@@ -363,7 +363,7 @@ async def show_users_menu(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_admin_users_keyboard(db_user.language)
+        reply_markup=get_admin_users_keyboard(db_user.language_code)
     )
     await callback.answer()
 
@@ -380,7 +380,7 @@ async def show_users_filters(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_admin_users_filters_keyboard(db_user.language)
+        reply_markup=get_admin_users_filters_keyboard(db_user.language_code)
     )
     await callback.answer()
 
@@ -404,7 +404,7 @@ async def show_users_list(
     if not users_data["users"]:
         await callback.message.edit_text(
             "👥 Пользователи не найдены",
-            reply_markup=get_admin_users_keyboard(db_user.language)
+            reply_markup=get_admin_users_keyboard(db_user.language_code)
         )
         await callback.answer()
         return
@@ -438,7 +438,7 @@ async def show_users_list(
         if user.balance_kopeks > 0:
             button_text += f" | 💰 {settings.format_price(user.balance_kopeks)}"
         
-        button_text += f" | 📅 {format_time_ago(user.created_at, db_user.language)}"
+        button_text += f" | 📅 {format_time_ago(user.created_at, db_user.language_code)}"
         
         if len(button_text) > 60:
             short_name = user.full_name
@@ -462,7 +462,7 @@ async def show_users_list(
             users_data["total_pages"],
             "admin_users_list",
             "admin_users",
-            db_user.language
+            db_user.language_code
         ).inline_keyboard[0]
         keyboard.append(pagination_row)
     
@@ -508,7 +508,7 @@ async def show_users_ready_to_renew(
     """Показывает пользователей с истекшей подпиской и балансом >= порога."""
     await state.set_state(AdminStates.viewing_user_from_ready_to_renew_list)
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     threshold = getattr(
         settings,
         "SUBSCRIPTION_RENEWAL_BALANCE_THRESHOLD_KOPEKS",
@@ -540,7 +540,7 @@ async def show_users_ready_to_renew(
         )
         await callback.message.edit_text(
             f"{header}\n\n{description}\n\n{empty_text}",
-            reply_markup=get_admin_users_keyboard(db_user.language),
+            reply_markup=get_admin_users_keyboard(db_user.language_code),
         )
         await callback.answer()
         return
@@ -597,7 +597,7 @@ async def show_users_ready_to_renew(
             users_data["total_pages"],
             "admin_users_ready_to_renew_list",
             "admin_users_ready_to_renew_filter",
-            db_user.language,
+            db_user.language_code,
         ).inline_keyboard[0]
         keyboard.append(pagination_row)
 
@@ -1197,7 +1197,7 @@ async def confirm_user_delete(
         reply_markup=get_confirmation_keyboard(
             f"admin_user_delete_confirm_{user_id}",
             f"admin_user_manage_{user_id}",
-            db_user.language
+            db_user.language_code
         )
     )
     await callback.answer()
@@ -1369,7 +1369,7 @@ async def show_user_management(
     user = profile["user"]
     subscription = profile["subscription"]
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     status_map = {
         UserStatus.ACTIVE.value: texts.ADMIN_USER_STATUS_ACTIVE,
@@ -1382,7 +1382,7 @@ async def show_user_management(
         f"@{user.username}" if user.username else texts.ADMIN_USER_USERNAME_NOT_SET
     )
     last_activity = (
-        format_time_ago(user.last_activity, db_user.language)
+        format_time_ago(user.last_activity, db_user.language_code)
         if user.last_activity
         else texts.ADMIN_USER_LAST_ACTIVITY_UNKNOWN
     )
@@ -1502,7 +1502,7 @@ async def show_user_management(
         back_callback = "admin_users_ready_to_renew_filter"
     
     # Базовая клавиатура профиля
-    kb = get_user_management_keyboard(user.id, user.status, db_user.language, back_callback)
+    kb = get_user_management_keyboard(user.id, user.status, db_user.language_code, back_callback)
     # Если пришли из тикета — добавим в начало кнопку возврата к тикету
     try:
         if origin_ticket_id:
@@ -1676,7 +1676,7 @@ async def show_user_referrals(
         if preserved_data:
             await state.update_data(**preserved_data)
 
-    view = await _build_user_referrals_view(db, db_user.language, user_id)
+    view = await _build_user_referrals_view(db, db_user.language_code, user_id)
     if not view:
         await callback.answer("❌ Пользователь не найден", show_alert=True)
         return
@@ -1705,7 +1705,7 @@ async def start_edit_referral_percent(
         await callback.answer("❌ Пользователь не найден", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     effective_percent = get_effective_referral_commission_percent(user)
     default_percent = settings.REFERRAL_COMMISSION_PERCENT
@@ -1816,7 +1816,7 @@ async def _render_referrals_after_update(
     user_id: int,
     success_message: str,
 ):
-    view = await _build_user_referrals_view(db, db_user.language, user_id)
+    view = await _build_user_referrals_view(db, db_user.language_code, user_id)
     if view:
         text, keyboard = view
         text = f"{success_message}\n\n" + text
@@ -1842,7 +1842,7 @@ async def set_referral_percent_button(
         user_id = int(parts[-2])
         percent_value = int(parts[-1])
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     success, effective_percent = await _update_referral_commission_percent(
         db,
@@ -1894,7 +1894,7 @@ async def process_referral_percent_input(
             percent_float = float(normalized_number)
         except (TypeError, ValueError):
             await message.answer(
-                get_texts(db_user.language).t(
+                get_texts(db_user.language_code).t(
                     "ADMIN_USER_REFERRAL_COMMISSION_INVALID",
                     "❌ Введите число от 0 до 100 или слово 'стандарт'",
                 )
@@ -1905,14 +1905,14 @@ async def process_referral_percent_input(
 
         if percent_value < 0 or percent_value > 100:
             await message.answer(
-                get_texts(db_user.language).t(
+                get_texts(db_user.language_code).t(
                     "ADMIN_USER_REFERRAL_COMMISSION_INVALID",
                     "❌ Введите число от 0 до 100 или слово 'стандарт'",
                 )
             )
             return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     success, effective_percent = await _update_referral_commission_percent(
         db,
@@ -1932,7 +1932,7 @@ async def process_referral_percent_input(
         "✅ Процент обновлён: {percent}%",
     ).format(percent=effective_percent)
 
-    view = await _build_user_referrals_view(db, db_user.language, int(user_id))
+    view = await _build_user_referrals_view(db, db_user.language_code, int(user_id))
     if view:
         text, keyboard = view
         await message.answer(f"{success_message}\n\n{text}", reply_markup=keyboard)
@@ -1955,7 +1955,7 @@ async def start_edit_user_referrals(
         await callback.answer("❌ Пользователь не найден", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     prompt = texts.t(
         "ADMIN_USER_REFERRALS_EDIT_PROMPT",
@@ -2003,7 +2003,7 @@ async def process_edit_user_referrals(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
 
     user_id = data.get("editing_referrals_user_id")
@@ -2172,7 +2172,7 @@ async def process_edit_user_referrals(
             ).format(values=", ".join(duplicate_tokens))
         )
 
-    view = await _build_user_referrals_view(db, db_user.language, user_id)
+    view = await _build_user_referrals_view(db, db_user.language_code, user_id)
     message_id = data.get("referrals_message_id")
 
     if view and message_id:
@@ -2272,11 +2272,11 @@ async def show_user_promo_group(
 
     promo_groups = await get_promo_groups_with_counts(db)
     if not promo_groups:
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ADMIN_PROMO_GROUPS_EMPTY, show_alert=True)
         return
 
-    await _render_user_promo_group(callback.message, db_user.language, user, promo_groups)
+    await _render_user_promo_group(callback.message, db_user.language_code, user, promo_groups)
     await callback.answer()
 
 
@@ -2299,7 +2299,7 @@ async def set_user_promo_group(
     user_id = int(parts[-2])
     group_id = int(parts[-1])
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     user = await get_user_by_id(db, user_id)
     if not user:
@@ -2351,7 +2351,7 @@ async def set_user_promo_group(
     # Refresh user data and show updated list
     user = await get_user_by_id(db, user_id)
     promo_groups = await get_promo_groups_with_counts(db)
-    await _render_user_promo_group(callback.message, db_user.language, user, promo_groups)
+    await _render_user_promo_group(callback.message, db_user.language_code, user, promo_groups)
 
 
 
@@ -2400,7 +2400,7 @@ async def start_send_user_message(
 
     await state.update_data(direct_message_user_id=user_id)
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     prompt = (
         texts.t("ADMIN_USER_SEND_MESSAGE_PROMPT",
                  "✉️ <b>Отправка сообщения пользователю</b>\n\n"
@@ -2430,7 +2430,7 @@ async def process_send_user_message(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
     user_id = data.get("direct_message_user_id")
 
@@ -2557,7 +2557,7 @@ async def confirm_user_block(
         reply_markup=get_confirmation_keyboard(
             f"admin_user_block_confirm_{user_id}",
             f"admin_user_manage_{user_id}",
-            db_user.language
+            db_user.language_code
         )
     )
     await callback.answer()
@@ -2613,7 +2613,7 @@ async def show_user_restrictions(
         await callback.answer("Пользователь не найден", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     # Формируем текст с информацией об ограничениях
     restriction_topup = getattr(user, 'restriction_topup', False)
@@ -2638,7 +2638,7 @@ async def show_user_restrictions(
         user_id=user_id,
         restriction_topup=restriction_topup,
         restriction_subscription=restriction_subscription,
-        language=db_user.language
+        language=db_user.language_code
     )
 
     await callback.message.edit_text(
@@ -2790,7 +2790,7 @@ async def save_restriction_reason(
         user_id=user_id,
         restriction_topup=restriction_topup,
         restriction_subscription=restriction_subscription,
-        language=db_user.language
+        language=db_user.language_code
     )
 
     await message.answer(
@@ -2857,7 +2857,7 @@ async def show_inactive_users(
         text += f"👤 {user_link}\n"
         text += f"🆔 <code>{user.telegram_id}</code>\n"
         last_activity_display = (
-            format_time_ago(user.last_activity, db_user.language)
+            format_time_ago(user.last_activity, db_user.language_code)
             if user.last_activity
             else "Никогда"
         )
@@ -2893,7 +2893,7 @@ async def confirm_user_unblock(
         reply_markup=get_confirmation_keyboard(
             f"admin_user_unblock_confirm_{user_id}",
             f"admin_user_manage_{user_id}",
-            db_user.language
+            db_user.language_code
         )
     )
     await callback.answer()
@@ -3396,7 +3396,7 @@ async def deactivate_user_subscription(
         reply_markup=get_confirmation_keyboard(
             f"admin_sub_deactivate_confirm_{user_id}",
             f"admin_user_subscription_{user_id}",
-            db_user.language
+            db_user.language_code
         )
     )
     await callback.answer()
@@ -4122,7 +4122,7 @@ async def confirm_reset_devices(
         reply_markup=get_confirmation_keyboard(
             f"admin_user_reset_devices_confirm_{user_id}",
             f"admin_user_subscription_{user_id}",
-            db_user.language
+            db_user.language_code
         )
     )
     await callback.answer()

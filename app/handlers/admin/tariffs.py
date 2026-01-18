@@ -350,7 +350,7 @@ async def show_tariffs_list(
 ):
     """Показывает список тарифов."""
     await state.clear()
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     # Проверяем режим продаж
     if not settings.is_tariffs_mode():
@@ -394,7 +394,7 @@ async def show_tariffs_list(
         f"Всего: {len(tariffs_data)} (активных: {active_count})\n"
         f"Подписок на тарифах: {total_subs}\n\n"
         "Выберите тариф для просмотра и редактирования:",
-        reply_markup=get_tariffs_list_keyboard(page_data, db_user.language, 0, total_pages),
+        reply_markup=get_tariffs_list_keyboard(page_data, db_user.language_code, 0, total_pages),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -408,7 +408,7 @@ async def show_tariffs_page(
     db: AsyncSession,
 ):
     """Показывает страницу списка тарифов."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     page = int(callback.data.split(":")[1])
 
     tariffs_data = await get_tariffs_with_subscriptions_count(db, include_inactive=True)
@@ -426,7 +426,7 @@ async def show_tariffs_page(
         f"Всего: {len(tariffs_data)} (активных: {active_count})\n"
         f"Подписок на тарифах: {total_subs}\n\n"
         "Выберите тариф для просмотра и редактирования:",
-        reply_markup=get_tariffs_list_keyboard(page_data, db_user.language, page, total_pages),
+        reply_markup=get_tariffs_list_keyboard(page_data, db_user.language_code, page, total_pages),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -450,8 +450,8 @@ async def view_tariff(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await callback.message.edit_text(
-        format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -479,8 +479,8 @@ async def toggle_tariff(
     await callback.answer(f"Тариф {status}", show_alert=True)
 
     await callback.message.edit_text(
-        format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -516,8 +516,8 @@ async def toggle_trial_tariff(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await callback.message.edit_text(
-        format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -555,8 +555,8 @@ async def toggle_daily_tariff(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await callback.message.edit_text(
-        format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -570,7 +570,7 @@ async def start_edit_daily_price(
     state: FSMContext,
 ):
     """Начинает редактирование суточной цены."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
@@ -583,7 +583,7 @@ async def start_edit_daily_price(
     current_rubles = current_price / 100 if current_price else 0
 
     await state.set_state(AdminStates.editing_tariff_daily_price)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     await callback.message.edit_text(
         f"💰 <b>Редактирование суточной цены</b>\n\n"
@@ -608,7 +608,7 @@ async def process_daily_price_input(
     state: FSMContext,
 ):
     """Обрабатывает ввод суточной цены (создание и редактирование)."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
     tariff_id = data.get("tariff_id")
 
@@ -647,8 +647,8 @@ async def process_daily_price_input(
 
         await message.answer(
             f"✅ <b>Суточный тариф создан!</b>\n\n"
-            + format_tariff_info(tariff, db_user.language, 0),
-            reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+            + format_tariff_info(tariff, db_user.language_code, 0),
+            reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
             parse_mode="HTML"
         )
     else:
@@ -670,8 +670,8 @@ async def process_daily_price_input(
 
         await message.answer(
             f"✅ Суточная цена установлена: {_format_price_kopeks(price_kopeks)}/день\n\n"
-            + format_tariff_info(tariff, db_user.language, subs_count),
-            reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+            + format_tariff_info(tariff, db_user.language_code, subs_count),
+            reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
             parse_mode="HTML"
         )
 
@@ -687,10 +687,10 @@ async def start_create_tariff(
     state: FSMContext,
 ):
     """Начинает создание тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await state.set_state(AdminStates.creating_tariff_name)
-    await state.update_data(language=db_user.language)
+    await state.update_data(language=db_user.language_code)
 
     await callback.message.edit_text(
         "📦 <b>Создание тарифа</b>\n\n"
@@ -713,7 +713,7 @@ async def process_tariff_name(
     state: FSMContext,
 ):
     """Обрабатывает название тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     name = message.text.strip()
 
     if len(name) < 2:
@@ -749,7 +749,7 @@ async def process_tariff_traffic(
     state: FSMContext,
 ):
     """Обрабатывает лимит трафика."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     try:
         traffic = int(message.text.strip())
@@ -787,7 +787,7 @@ async def process_tariff_devices(
     state: FSMContext,
 ):
     """Обрабатывает лимит устройств."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     try:
         devices = int(message.text.strip())
@@ -828,7 +828,7 @@ async def process_tariff_tier(
     state: FSMContext,
 ):
     """Обрабатывает уровень тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     try:
         tier = int(message.text.strip())
@@ -869,7 +869,7 @@ async def select_tariff_type_periodic(
     state: FSMContext,
 ):
     """Выбирает периодный тип тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
 
     await state.update_data(tariff_is_daily=False)
@@ -907,7 +907,7 @@ async def select_tariff_type_daily(
     """Выбирает суточный тип тарифа."""
     from app.states import AdminStates
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
 
     await state.update_data(tariff_is_daily=True)
@@ -941,7 +941,7 @@ async def process_tariff_prices(
     state: FSMContext,
 ):
     """Обрабатывает цены тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     prices = _parse_period_prices(message.text.strip())
 
@@ -977,8 +977,8 @@ async def process_tariff_prices(
 
     await message.answer(
         f"✅ <b>Тариф создан!</b>\n\n"
-        + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -994,7 +994,7 @@ async def start_edit_tariff_name(
     state: FSMContext,
 ):
     """Начинает редактирование названия тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1003,7 +1003,7 @@ async def start_edit_tariff_name(
         return
 
     await state.set_state(AdminStates.editing_tariff_name)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     await callback.message.edit_text(
         f"✏️ <b>Редактирование названия</b>\n\n"
@@ -1046,8 +1046,8 @@ async def process_edit_tariff_name(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Название изменено!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Название изменено!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1061,7 +1061,7 @@ async def start_edit_tariff_description(
     state: FSMContext,
 ):
     """Начинает редактирование описания тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1070,7 +1070,7 @@ async def start_edit_tariff_description(
         return
 
     await state.set_state(AdminStates.editing_tariff_description)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     current_desc = tariff.description or "Не задано"
 
@@ -1114,8 +1114,8 @@ async def process_edit_tariff_description(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Описание изменено!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Описание изменено!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1129,7 +1129,7 @@ async def start_edit_tariff_traffic(
     state: FSMContext,
 ):
     """Начинает редактирование трафика тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1138,7 +1138,7 @@ async def start_edit_tariff_traffic(
         return
 
     await state.set_state(AdminStates.editing_tariff_traffic)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     current_traffic = _format_traffic(tariff.traffic_limit_gb)
 
@@ -1186,8 +1186,8 @@ async def process_edit_tariff_traffic(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Трафик изменен!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Трафик изменен!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1201,7 +1201,7 @@ async def start_edit_tariff_devices(
     state: FSMContext,
 ):
     """Начинает редактирование лимита устройств."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1210,7 +1210,7 @@ async def start_edit_tariff_devices(
         return
 
     await state.set_state(AdminStates.editing_tariff_devices)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     await callback.message.edit_text(
         f"📱 <b>Редактирование устройств</b>\n\n"
@@ -1256,8 +1256,8 @@ async def process_edit_tariff_devices(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Лимит устройств изменен!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Лимит устройств изменен!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1271,7 +1271,7 @@ async def start_edit_tariff_tier(
     state: FSMContext,
 ):
     """Начинает редактирование уровня тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1280,7 +1280,7 @@ async def start_edit_tariff_tier(
         return
 
     await state.set_state(AdminStates.editing_tariff_tier)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     await callback.message.edit_text(
         f"🎚️ <b>Редактирование уровня</b>\n\n"
@@ -1326,8 +1326,8 @@ async def process_edit_tariff_tier(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Уровень изменен!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Уровень изменен!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1341,7 +1341,7 @@ async def start_edit_tariff_prices(
     state: FSMContext,
 ):
     """Начинает редактирование цен тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1350,7 +1350,7 @@ async def start_edit_tariff_prices(
         return
 
     await state.set_state(AdminStates.editing_tariff_prices)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     current_prices = _format_period_prices_for_edit(tariff.period_prices or {})
     prices_display = _format_period_prices_display(tariff.period_prices or {})
@@ -1403,8 +1403,8 @@ async def process_edit_tariff_prices(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Цены изменены!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Цены изменены!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1420,7 +1420,7 @@ async def start_edit_tariff_device_price(
     state: FSMContext,
 ):
     """Начинает редактирование цены за устройство."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1429,7 +1429,7 @@ async def start_edit_tariff_device_price(
         return
 
     await state.set_state(AdminStates.editing_tariff_device_price)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     device_price = getattr(tariff, 'device_price_kopeks', None)
     if device_price is not None and device_price > 0:
@@ -1492,8 +1492,8 @@ async def process_edit_tariff_device_price(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Цена за устройство изменена!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Цена за устройство изменена!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1509,7 +1509,7 @@ async def start_edit_tariff_trial_days(
     state: FSMContext,
 ):
     """Начинает редактирование дней триала."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1518,7 +1518,7 @@ async def start_edit_tariff_trial_days(
         return
 
     await state.set_state(AdminStates.editing_tariff_trial_days)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     trial_days = getattr(tariff, 'trial_duration_days', None)
     if trial_days:
@@ -1581,8 +1581,8 @@ async def process_edit_tariff_trial_days(
     subs_count = await get_tariff_subscriptions_count(db, tariff_id)
 
     await message.answer(
-        f"✅ Дни триала изменены!\n\n" + format_tariff_info(tariff, db_user.language, subs_count),
-        reply_markup=get_tariff_view_keyboard(tariff, db_user.language),
+        f"✅ Дни триала изменены!\n\n" + format_tariff_info(tariff, db_user.language_code, subs_count),
+        reply_markup=get_tariff_view_keyboard(tariff, db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -1638,7 +1638,7 @@ async def start_edit_tariff_traffic_topup(
     state: FSMContext,
 ):
     """Показывает меню настройки докупки трафика."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1733,7 +1733,7 @@ async def toggle_tariff_traffic_topup(
     await callback.answer(f"Докупка трафика {status_text}")
 
     # Перерисовываем меню
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     packages = tariff.get_traffic_topup_packages() if hasattr(tariff, 'get_traffic_topup_packages') else {}
     max_topup_traffic = getattr(tariff, 'max_topup_traffic_gb', 0) or 0
 
@@ -1797,7 +1797,7 @@ async def start_edit_traffic_topup_packages(
     state: FSMContext,
 ):
     """Начинает редактирование пакетов докупки трафика."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1806,7 +1806,7 @@ async def start_edit_traffic_topup_packages(
         return
 
     await state.set_state(AdminStates.editing_tariff_traffic_topup_packages)
-    await state.update_data(tariff_id=tariff_id, language=db_user.language)
+    await state.update_data(tariff_id=tariff_id, language=db_user.language_code)
 
     packages = tariff.get_traffic_topup_packages() if hasattr(tariff, 'get_traffic_topup_packages') else {}
     current_packages = _format_traffic_topup_packages_for_edit(packages)
@@ -1868,7 +1868,7 @@ async def process_edit_traffic_topup_packages(
     await state.clear()
 
     # Показываем обновленное меню
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     packages_display = "\n".join(f"  • {gb} ГБ: {_format_price_kopeks(price)}" for gb, price in sorted(packages.items()))
     max_topup_traffic = getattr(tariff, 'max_topup_traffic_gb', 0) or 0
     max_limit_display = f"{max_topup_traffic} ГБ" if max_topup_traffic > 0 else "Без ограничений"
@@ -1903,7 +1903,7 @@ async def start_edit_max_topup_traffic(
     state: FSMContext,
 ):
     """Начинает редактирование максимального лимита докупки трафика."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -1944,7 +1944,7 @@ async def process_edit_max_topup_traffic(
     state: FSMContext,
 ):
     """Обрабатывает новое значение максимального лимита докупки трафика."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     state_data = await state.get_data()
     tariff_id = state_data.get("tariff_id")
 
@@ -2010,7 +2010,7 @@ async def confirm_delete_tariff(
     db: AsyncSession,
 ):
     """Запрашивает подтверждение удаления тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -2047,7 +2047,7 @@ async def delete_tariff_confirmed(
     db: AsyncSession,
 ):
     """Удаляет тариф после подтверждения."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -2082,7 +2082,7 @@ async def delete_tariff_confirmed(
         f"📦 <b>Тарифы</b>\n\n"
         f"✅ Тариф «{tariff_name}» удален\n\n"
         f"Всего: {len(tariffs_data)}",
-        reply_markup=get_tariffs_list_keyboard(page_data, db_user.language, 0, total_pages),
+        reply_markup=get_tariffs_list_keyboard(page_data, db_user.language_code, 0, total_pages),
         parse_mode="HTML"
     )
 
@@ -2098,7 +2098,7 @@ async def start_edit_tariff_squads(
     state: FSMContext,
 ):
     """Показывает меню выбора серверов для тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -2174,7 +2174,7 @@ async def toggle_tariff_squad(
 
     # Перерисовываем меню
     squads, _ = await get_all_server_squads(db)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     buttons = []
     for squad in squads:
@@ -2230,7 +2230,7 @@ async def clear_tariff_squads(
 
     # Перерисовываем меню
     squads, _ = await get_all_server_squads(db)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     buttons = []
     for squad in squads:
@@ -2283,7 +2283,7 @@ async def select_all_tariff_squads(
     tariff = await update_tariff(db, tariff, allowed_squads=all_uuids)
     await callback.answer("Все серверы выбраны")
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     buttons = []
     for squad in squads:
@@ -2325,7 +2325,7 @@ async def start_edit_tariff_promo_groups(
     db: AsyncSession,
 ):
     """Показывает меню выбора промогрупп для тарифа."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     tariff_id = int(callback.data.split(":")[1])
     tariff = await get_tariff_by_id(db, tariff_id)
 
@@ -2406,7 +2406,7 @@ async def toggle_tariff_promo_group(
 
     # Перерисовываем меню
     promo_groups_data = await get_promo_groups_with_counts(db)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     buttons = []
     for promo_group, _ in promo_groups_data:
@@ -2463,7 +2463,7 @@ async def clear_tariff_promo_groups(
 
     # Перерисовываем меню
     promo_groups_data = await get_promo_groups_with_counts(db)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     buttons = []
     for promo_group, _ in promo_groups_data:

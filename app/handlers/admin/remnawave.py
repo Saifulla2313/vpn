@@ -311,7 +311,7 @@ async def show_squad_migration_menu(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await state.clear()
 
@@ -371,7 +371,7 @@ async def paginate_migration_source(
         return
 
     squads, page, total_pages = await _fetch_migration_page(db, page=page)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     keyboard, has_items = _build_migration_keyboard(
         texts,
         squads,
@@ -424,7 +424,7 @@ async def handle_migration_source_selection(
 
     source_uuid = callback.data.replace("admin_migration_source_", "", 1)
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     server = await get_server_squad_by_uuid(db, source_uuid)
 
     if not server:
@@ -509,7 +509,7 @@ async def paginate_migration_target(
         await callback.answer()
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     squads, page, total_pages = await _fetch_migration_page(db, page=page)
     keyboard, has_items = _build_migration_keyboard(
@@ -580,7 +580,7 @@ async def handle_migration_target_selection(
 
     target_uuid = callback.data.replace("admin_migration_target_", "", 1)
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if target_uuid == source_uuid:
         await callback.answer(
@@ -695,7 +695,7 @@ async def change_migration_target(
 
     await state.set_state(SquadMigrationStates.selecting_target)
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     squads, page, total_pages = await _fetch_migration_page(db, page=1)
     keyboard, has_items = _build_migration_keyboard(
         texts,
@@ -760,7 +760,7 @@ async def confirm_squad_migration(
         await callback.answer()
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     remnawave_service = RemnaWaveService()
 
     await callback.answer(texts.t("ADMIN_SQUAD_MIGRATION_IN_PROGRESS", "Запускаю переезд..."))
@@ -906,7 +906,7 @@ async def cancel_squad_migration(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await state.clear()
 
     message = texts.t(
@@ -940,7 +940,7 @@ async def handle_migration_page_info(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await callback.answer(
         texts.t("ADMIN_SQUAD_MIGRATION_PAGE_HINT", "Это текущая страница."),
         show_alert=False,
@@ -977,7 +977,7 @@ async def show_remnawave_menu(
    
    await callback.message.edit_text(
        text,
-       reply_markup=get_admin_remnawave_keyboard(db_user.language)
+       reply_markup=get_admin_remnawave_keyboard(db_user.language_code)
    )
    await callback.answer()
 
@@ -1374,7 +1374,7 @@ async def show_node_details(
    
    await callback.message.edit_text(
        text,
-       reply_markup=get_node_management_keyboard(node_uuid, db_user.language)
+       reply_markup=get_node_management_keyboard(node_uuid, db_user.language_code)
    )
    await callback.answer()
 
@@ -1592,7 +1592,7 @@ async def show_squad_details(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_squad_management_keyboard(squad_uuid, db_user.language)
+        reply_markup=get_squad_management_keyboard(squad_uuid, db_user.language_code)
     )
     await callback.answer()
 
@@ -1675,7 +1675,7 @@ async def show_squad_edit_menu(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_squad_edit_keyboard(squad_uuid, db_user.language)
+        reply_markup=get_squad_edit_keyboard(squad_uuid, db_user.language_code)
     )
     await callback.answer()
 

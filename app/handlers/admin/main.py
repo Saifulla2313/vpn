@@ -33,7 +33,7 @@ async def show_admin_panel(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     
     admin_text = texts.ADMIN_PANEL
     try:
@@ -58,7 +58,7 @@ async def show_admin_panel(
     
     await callback.message.edit_text(
         admin_text,
-        reply_markup=get_admin_main_keyboard(db_user.language)
+        reply_markup=get_admin_main_keyboard(db_user.language_code)
     )
     await callback.answer()
 
@@ -70,12 +70,12 @@ async def show_users_submenu(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await callback.message.edit_text(
         texts.t("ADMIN_USERS_SUBMENU_TITLE", "👥 **Управление пользователями и подписками**\n\n") +
         texts.t("ADMIN_SUBMENU_SELECT_SECTION", "Выберите нужный раздел:"),
-        reply_markup=get_admin_users_submenu_keyboard(db_user.language),
+        reply_markup=get_admin_users_submenu_keyboard(db_user.language_code),
         parse_mode="Markdown"
     )
     await callback.answer()
@@ -88,12 +88,12 @@ async def show_promo_submenu(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await callback.message.edit_text(
         texts.t("ADMIN_PROMO_SUBMENU_TITLE", "💰 **Промокоды и статистика**\n\n") +
         texts.t("ADMIN_SUBMENU_SELECT_SECTION", "Выберите нужный раздел:"),
-        reply_markup=get_admin_promo_submenu_keyboard(db_user.language),
+        reply_markup=get_admin_promo_submenu_keyboard(db_user.language_code),
         parse_mode="Markdown"
     )
     await callback.answer()
@@ -106,12 +106,12 @@ async def show_communications_submenu(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await callback.message.edit_text(
         texts.t("ADMIN_COMMUNICATIONS_SUBMENU_TITLE", "📨 **Коммуникации**\n\n") +
         texts.t("ADMIN_COMMUNICATIONS_SUBMENU_DESCRIPTION", "Управление рассылками и текстами интерфейса:"),
-        reply_markup=get_admin_communications_submenu_keyboard(db_user.language),
+        reply_markup=get_admin_communications_submenu_keyboard(db_user.language_code),
         parse_mode="Markdown"
     )
     await callback.answer()
@@ -124,11 +124,11 @@ async def show_support_submenu(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     # Moderators have access only to tickets and not to settings
     is_moderator_only = (not settings.is_admin(callback.from_user.id) and SupportSettingsService.is_moderator(callback.from_user.id))
     
-    kb = get_admin_support_submenu_keyboard(db_user.language)
+    kb = get_admin_support_submenu_keyboard(db_user.language_code)
     if is_moderator_only:
         # Rebuild keyboard to include only tickets and back to main menu
         kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -153,7 +153,7 @@ async def show_moderator_panel(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=texts.t("ADMIN_SUPPORT_TICKETS", "🎫 Тикеты поддержки"), callback_data="admin_tickets")],
         [InlineKeyboardButton(text=texts.t("BACK_TO_MAIN_MENU_BUTTON", "⬅️ В главное меню"), callback_data="back_to_menu")]
@@ -174,7 +174,7 @@ async def show_support_audit(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     # pagination
     page = 1
     if callback.data.startswith("admin_support_audit_page_"):
@@ -246,12 +246,12 @@ async def show_settings_submenu(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await callback.message.edit_text(
         texts.t("ADMIN_SETTINGS_SUBMENU_TITLE", "⚙️ **Настройки системы**\n\n") +
         texts.t("ADMIN_SETTINGS_SUBMENU_DESCRIPTION", "Управление Remnawave, мониторингом и другими настройками:"),
-        reply_markup=get_admin_settings_submenu_keyboard(db_user.language),
+        reply_markup=get_admin_settings_submenu_keyboard(db_user.language_code),
         parse_mode="Markdown"
     )
     await callback.answer()
@@ -264,12 +264,12 @@ async def show_system_submenu(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await callback.message.edit_text(
         texts.t("ADMIN_SYSTEM_SUBMENU_TITLE", "🛠️ **Системные функции**\n\n") +
         texts.t("ADMIN_SYSTEM_SUBMENU_DESCRIPTION", "Отчеты, обновления, логи, резервные копии и системные операции:"),
-        reply_markup=get_admin_system_submenu_keyboard(db_user.language),
+        reply_markup=get_admin_system_submenu_keyboard(db_user.language_code),
         parse_mode="Markdown"
     )
     await callback.answer()
@@ -293,7 +293,7 @@ async def clear_rules_command(
             )
             return
         
-        success = await clear_all_rules(db, db_user.language)
+        success = await clear_all_rules(db, db_user.language_code)
         
         if success:
             clear_rules_cache()
@@ -302,7 +302,7 @@ async def clear_rules_command(
                 f"✅ <b>Правила успешно очищены!</b>\n\n"
                 f"📊 <b>Статистика:</b>\n"
                 f"• Очищено правил: {stats['total_active']}\n"
-                f"• Язык: {db_user.language}\n"
+                f"• Язык: {db_user.language_code}\n"
                 f"• Выполнил: {db_user.full_name}\n\n"
                 f"Теперь используются стандартные правила по умолчанию."
             )

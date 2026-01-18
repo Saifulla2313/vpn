@@ -94,7 +94,7 @@ async def show_updates_menu(
         
         await callback.message.edit_text(
             message,
-            reply_markup=get_updates_keyboard(db_user.language),
+            reply_markup=get_updates_keyboard(db_user.language_code),
             parse_mode="HTML"
         )
         await callback.answer()
@@ -145,7 +145,7 @@ async def check_updates(
 
 🔗 <b>Репозиторий:</b> {version_service.repo}"""
         
-        keyboard = get_updates_keyboard(db_user.language)
+        keyboard = get_updates_keyboard(db_user.language_code)
         
         if has_updates:
             keyboard.inline_keyboard.insert(-2, [
@@ -168,7 +168,7 @@ async def check_updates(
             f"Не удалось связаться с сервером GitHub.\n"
             f"Попробуйте позже.\n\n"
             f"📦 <b>Текущая версия:</b> <code>{version_service.current_version}</code>",
-            reply_markup=get_updates_keyboard(db_user.language),
+            reply_markup=get_updates_keyboard(db_user.language_code),
             parse_mode="HTML"
         )
 
@@ -240,7 +240,7 @@ async def show_version_info(
         
         await callback.message.edit_text(
             final_message,
-            reply_markup=get_version_info_keyboard(db_user.language),
+            reply_markup=get_version_info_keyboard(db_user.language_code),
             parse_mode="HTML",
             disable_web_page_preview=True
         )
@@ -251,7 +251,7 @@ async def show_version_info(
             f"❌ <b>ОШИБКА ЗАГРУЗКИ</b>\n\n"
             f"Не удалось получить информацию о версиях.\n\n"
             f"📦 <b>Текущая версия:</b> <code>{version_service.current_version}</code>",
-            reply_markup=get_version_info_keyboard(db_user.language),
+            reply_markup=get_version_info_keyboard(db_user.language_code),
             parse_mode="HTML"
         )
 

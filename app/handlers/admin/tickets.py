@@ -97,10 +97,10 @@ async def show_admin_tickets(
     """Показать все тикеты для админов"""
     # permission gate: admin or active moderator only
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     
     # Определяем текущую страницу и scope
     current_page = 1
@@ -171,7 +171,7 @@ async def show_admin_tickets(
         ticket_data,
         current_page=current_page,
         total_pages=total_pages,
-        language=db_user.language,
+        language=db_user.language_code,
         scope=scope,
         back_callback=back_cb,
     )
@@ -194,7 +194,7 @@ async def view_admin_ticket(
 ):
     """Показать детали тикета для админа с пагинацией"""
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
 
@@ -214,7 +214,7 @@ async def view_admin_ticket(
         try:
             ticket_id = int(data_str.split("_")[-1])
         except (ValueError, AttributeError):
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             await callback.answer(
                 texts.t("TICKET_NOT_FOUND", "Тикет не найден."),
                 show_alert=True
@@ -227,14 +227,14 @@ async def view_admin_ticket(
     ticket = await TicketCRUD.get_ticket_by_id(db, ticket_id, load_messages=True, load_user=True)
 
     if not ticket:
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(
             texts.t("TICKET_NOT_FOUND", "Тикет не найден."),
             show_alert=True
         )
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     # Формируем заголовок тикета
     status_text = {
@@ -291,7 +291,7 @@ async def view_admin_ticket(
     keyboard = get_admin_ticket_view_keyboard(
         ticket_id,
         ticket.is_closed,
-        db_user.language,
+        db_user.language_code,
         is_user_blocked=ticket.is_user_reply_blocked
     )
 
@@ -390,16 +390,16 @@ async def reply_to_admin_ticket(
 ):
     """Начать ответ на тикет от админа"""
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
     ticket_id = int(callback.data.replace("admin_reply_ticket_", ""))
     
     await state.update_data(ticket_id=ticket_id, reply_mode=True)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await callback.message.edit_text(
         texts.t("ADMIN_TICKET_REPLY_INPUT", "Введите ответ от поддержки:"),
-        reply_markup=get_admin_ticket_reply_cancel_keyboard(db_user.language)
+        reply_markup=get_admin_ticket_reply_cancel_keyboard(db_user.language_code)
     )
 
     await state.set_state(AdminTicketStates.waiting_for_reply)
@@ -413,7 +413,7 @@ async def handle_admin_ticket_reply(
     db: AsyncSession
 ):
     if not (settings.is_admin(message.from_user.id) or SupportSettingsService.is_moderator(message.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await message.answer(texts.ACCESS_DENIED)
         await state.clear()
         return
@@ -455,7 +455,7 @@ async def handle_admin_ticket_reply(
         media_caption = message.caption
 
     if len(reply_text) < 1 and not media_file_id:
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await message.answer(
             texts.t("TICKET_REPLY_TOO_SHORT", "Ответ должен содержать минимум 5 символов. Попробуйте еще раз:")
         )
@@ -469,7 +469,7 @@ async def handle_admin_ticket_reply(
         ticket_id = None
 
     if not ticket_id:
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await message.answer(
             texts.t("TICKET_REPLY_ERROR", "Ошибка: не найден ID тикета.")
         )
@@ -497,7 +497,7 @@ async def handle_admin_ticket_reply(
         # Обычный режим ответа админа
         ticket = await TicketCRUD.get_ticket_by_id(db, ticket_id, load_messages=False, load_user=True)
         if not ticket:
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             await message.answer(
                 texts.t("TICKET_NOT_FOUND", "Тикет не найден.")
             )
@@ -516,7 +516,7 @@ async def handle_admin_ticket_reply(
             media_caption=media_caption,
         )
 
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
 
         await message.answer(
             texts.t("ADMIN_TICKET_REPLY_SENT", "✅ Ответ отправлен!"),
@@ -540,7 +540,7 @@ async def handle_admin_ticket_reply(
 
     except Exception as e:
         logger.error(f"Error adding admin ticket reply: {e}")
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await message.answer(
             texts.t("TICKET_REPLY_ERROR", "❌ Произошла ошибка при отправке ответа. Попробуйте позже.")
         )
@@ -561,7 +561,7 @@ async def mark_ticket_as_answered(
         )
         
         if success:
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             await callback.answer(
                 texts.t("TICKET_MARKED_ANSWERED", "✅ Тикет отмечен как отвеченный."),
                 show_alert=True
@@ -570,7 +570,7 @@ async def mark_ticket_as_answered(
             # Обновляем сообщение
             await view_admin_ticket(callback, db_user, db, state)
         else:
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             await callback.answer(
                 texts.t("TICKET_UPDATE_ERROR", "❌ Ошибка при обновлении тикета."),
                 show_alert=True
@@ -578,7 +578,7 @@ async def mark_ticket_as_answered(
             
     except Exception as e:
         logger.error(f"Error marking ticket as answered: {e}")
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(
             texts.t("TICKET_UPDATE_ERROR", "❌ Ошибка при обновлении тикета."),
             show_alert=True
@@ -592,11 +592,11 @@ async def close_all_open_admin_tickets(
 ):
     """Закрыть все открытые тикеты."""
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     try:
         closed_ticket_ids = await TicketCRUD.close_all_open_tickets(db)
@@ -667,7 +667,7 @@ async def close_admin_ticket(
 ):
     """Закрыть тикет админом"""
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
     ticket_id = int(callback.data.replace("admin_close_ticket_", ""))
@@ -702,7 +702,7 @@ async def close_admin_ticket(
                 )
             except Exception:
                 pass
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             # Notify with deletable inline message
             try:
                 await callback.message.answer(
@@ -716,10 +716,10 @@ async def close_admin_ticket(
             
             # Обновляем inline-клавиатуру в текущем сообщении без кнопок действий
             await callback.message.edit_reply_markup(
-                reply_markup=get_admin_ticket_view_keyboard(ticket_id, True, db_user.language)
+                reply_markup=get_admin_ticket_view_keyboard(ticket_id, True, db_user.language_code)
             )
         else:
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             await callback.answer(
                 texts.t("TICKET_CLOSE_ERROR", "❌ Ошибка при закрытии тикета."),
                 show_alert=True
@@ -727,7 +727,7 @@ async def close_admin_ticket(
             
     except Exception as e:
         logger.error(f"Error closing admin ticket: {e}")
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(
             texts.t("TICKET_CLOSE_ERROR", "❌ Ошибка при закрытии тикета."),
             show_alert=True
@@ -741,12 +741,12 @@ async def cancel_admin_ticket_reply(
 ):
     """Отменить ответ админа на тикет"""
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
     await state.clear()
     
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     
     await callback.message.edit_text(
         texts.t("TICKET_REPLY_CANCELLED", "Ответ отменен."),
@@ -767,11 +767,11 @@ async def block_user_in_ticket(
     db: AsyncSession
 ):
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
     ticket_id = int(callback.data.replace("admin_block_user_ticket_", ""))
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     # Save original ticket message ids to update it after blocking without reopening
     try:
         await state.update_data(origin_chat_id=callback.message.chat.id, origin_message_id=callback.message.message_id)
@@ -799,7 +799,7 @@ async def handle_admin_block_duration_input(
 ):
     # permission gate for message flow
     if not (settings.is_admin(message.from_user.id) or SupportSettingsService.is_moderator(message.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await message.answer(texts.ACCESS_DENIED)
         await state.clear()
         return
@@ -825,7 +825,7 @@ async def handle_admin_block_duration_input(
         return
     
     if not ticket_id:
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await message.answer(texts.t("TICKET_REPLY_ERROR", "Ошибка: не найден ID тикета."))
         await state.clear()
         return
@@ -833,7 +833,7 @@ async def handle_admin_block_duration_input(
     try:
         ticket = await TicketCRUD.get_ticket_by_id(db, ticket_id, load_messages=False)
         if not ticket:
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             await message.answer(texts.t("TICKET_NOT_FOUND", "Тикет не найден."))
             await state.clear()
             return
@@ -861,7 +861,7 @@ async def handle_admin_block_duration_input(
         # Refresh original ticket card (caption/text and buttons) in place
         try:
             updated = await TicketCRUD.get_ticket_by_id(db, ticket_id, load_messages=True, load_user=True)
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             status_text = {
                 TicketStatus.OPEN.value: texts.t("TICKET_STATUS_OPEN", "Открыт"),
                 TicketStatus.ANSWERED.value: texts.t("TICKET_STATUS_ANSWERED", "Отвечен"),
@@ -903,7 +903,7 @@ async def handle_admin_block_duration_input(
                     if getattr(msg, "has_media", False) and getattr(msg, "media_type", None) == "photo":
                         ticket_text += "📎 Вложение: фото\n\n"
 
-            kb = get_admin_ticket_view_keyboard(updated.id, updated.is_closed, db_user.language, is_user_blocked=updated.is_user_reply_blocked)
+            kb = get_admin_ticket_view_keyboard(updated.id, updated.is_closed, db_user.language_code, is_user_blocked=updated.is_user_reply_blocked)
             # Кнопка открытия профиля пользователя в админке
             try:
                 if updated.user:
@@ -949,7 +949,7 @@ async def handle_admin_block_duration_input(
             await state.clear()
     except Exception as e:
         logger.error(f"Error setting block duration: {e}")
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await message.answer(texts.t("TICKET_REPLY_ERROR", "❌ Произошла ошибка. Попробуйте позже."))
 
 
@@ -962,7 +962,7 @@ async def unblock_user_in_ticket(
     state: FSMContext
 ):
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
     ticket_id = int(callback.data.replace("admin_unblock_user_ticket_", ""))
@@ -1015,7 +1015,7 @@ async def block_user_permanently(
     state: FSMContext
 ):
     if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return
     ticket_id = int(callback.data.replace("admin_block_user_perm_ticket_", ""))
@@ -1189,10 +1189,10 @@ def register_handlers(dp: Dispatcher):
     ):
         # permission gate for attachments view
         if not (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id)):
-            texts = get_texts(db_user.language)
+            texts = get_texts(db_user.language_code)
             await callback.answer(texts.ACCESS_DENIED, show_alert=True)
             return
-        texts = get_texts(db_user.language)
+        texts = get_texts(db_user.language_code)
         try:
             ticket_id = int(callback.data.replace("admin_ticket_attachments_", ""))
         except ValueError:

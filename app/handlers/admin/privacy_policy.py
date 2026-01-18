@@ -29,14 +29,14 @@ async def _build_overview(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     policy = await PrivacyPolicyService.get_policy(
         db,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
     )
 
-    normalized_language = PrivacyPolicyService.normalize_language(db_user.language)
+    normalized_language = PrivacyPolicyService.normalize_language(db_user.language_code)
     has_content = bool(policy and policy.content and policy.content.strip())
 
     description = texts.t(
@@ -197,8 +197,8 @@ async def toggle_privacy_policy(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
-    updated_policy = await PrivacyPolicyService.toggle_enabled(db, db_user.language)
+    texts = get_texts(db_user.language_code)
+    updated_policy = await PrivacyPolicyService.toggle_enabled(db, db_user.language_code)
     logger.info(
         "Админ %s переключил показ политики конфиденциальности: %s",
         db_user.telegram_id,
@@ -226,11 +226,11 @@ async def start_edit_privacy_policy(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     policy = await PrivacyPolicyService.get_policy(
         db,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
     )
 
@@ -312,7 +312,7 @@ async def process_privacy_policy_edit(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     new_text = message.text or ""
 
     if len(new_text) > 4000:
@@ -334,7 +334,7 @@ async def process_privacy_policy_edit(
         )
         return
 
-    await PrivacyPolicyService.save_policy(db, db_user.language, new_text)
+    await PrivacyPolicyService.save_policy(db, db_user.language_code, new_text)
     logger.info(
         "Админ %s обновил текст политики конфиденциальности (%d символов)",
         db_user.telegram_id,
@@ -371,10 +371,10 @@ async def view_privacy_policy(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     policy = await PrivacyPolicyService.get_policy(
         db,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
     )
 
@@ -445,7 +445,7 @@ async def show_privacy_policy_html_help(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     help_text = get_html_help_text()
 
     current_state = await state.get_state()

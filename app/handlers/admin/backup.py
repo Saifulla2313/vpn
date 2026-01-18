@@ -157,7 +157,7 @@ async def show_backup_panel(
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
-        reply_markup=get_backup_main_keyboard(db_user.language)
+        reply_markup=get_backup_main_keyboard(db_user.language_code)
     )
     await callback.answer()
 
@@ -188,13 +188,13 @@ async def create_backup_handler(
         await progress_msg.edit_text(
             f"✅ <b>Бекап создан успешно!</b>\n\n{message}",
             parse_mode="HTML",
-            reply_markup=get_backup_main_keyboard(db_user.language)
+            reply_markup=get_backup_main_keyboard(db_user.language_code)
         )
     else:
         await progress_msg.edit_text(
             f"❌ <b>Ошибка создания бекапа</b>\n\n{message}",
             parse_mode="HTML",
-            reply_markup=get_backup_main_keyboard(db_user.language)
+            reply_markup=get_backup_main_keyboard(db_user.language_code)
         )
 
 
@@ -439,7 +439,7 @@ async def restore_backup_execute(
         await progress_msg.edit_text(
             f"✅ <b>Восстановление завершено!</b>\n\n{message}",
             parse_mode="HTML",
-            reply_markup=get_backup_main_keyboard(db_user.language)
+            reply_markup=get_backup_main_keyboard(db_user.language_code)
         )
     else:
         await progress_msg.edit_text(

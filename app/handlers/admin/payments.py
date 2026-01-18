@@ -470,7 +470,7 @@ async def show_payments_overview(
     db_user: User,
     db: AsyncSession,
 ) -> None:
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     page = 1
     if callback.data.startswith("admin_payments_page_"):
@@ -504,7 +504,7 @@ async def show_payments_overview(
 
     if page_records:
         for idx, record in enumerate(page_records, start=start_index + 1):
-            lines.extend(_build_record_lines(record, index=idx, texts=texts, language=db_user.language))
+            lines.extend(_build_record_lines(record, index=idx, texts=texts, language=db_user.language_code))
             lines.append("")
         lines.append(notice)
     else:
@@ -516,7 +516,7 @@ async def show_payments_overview(
         page_records,
         page=page,
         total_pages=total_pages,
-        language=db_user.language,
+        language=db_user.language_code,
     )
 
     await callback.message.edit_text(
@@ -532,9 +532,9 @@ async def _render_payment_details(
     db_user: User,
     record: PendingPayment,
 ) -> None:
-    texts = get_texts(db_user.language)
-    text = _build_payment_details_text(record, texts=texts, language=db_user.language)
-    keyboard = _build_detail_keyboard(record, language=db_user.language)
+    texts = get_texts(db_user.language_code)
+    text = _build_payment_details_text(record, texts=texts, language=db_user.language_code)
+    keyboard = _build_detail_keyboard(record, language=db_user.language_code)
     await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
 
 
@@ -574,7 +574,7 @@ async def manual_check_payment(
 
     method, payment_id = parsed
     record = await get_payment_record(db, method, payment_id)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not record:
         await callback.answer(texts.t("ADMIN_PAYMENT_NOT_FOUND", "Payment not found."), show_alert=True)

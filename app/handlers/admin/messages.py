@@ -206,7 +206,7 @@ async def show_messages_menu(
     await safe_edit_or_send_text(
         callback,
         text,
-        reply_markup=get_admin_messages_keyboard(db_user.language),
+        reply_markup=get_admin_messages_keyboard(db_user.language_code),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -259,7 +259,7 @@ async def show_pinned_message_menu(
     await callback.message.edit_text(
         body,
         reply_markup=get_pinned_message_keyboard(
-            db_user.language,
+            db_user.language_code,
             send_before_menu=getattr(pinned_message, "send_before_menu", True),
             send_on_every_start=getattr(pinned_message, "send_on_every_start", True),
         ),
@@ -355,7 +355,7 @@ async def delete_pinned_message(
     if not deleted:
         await callback.message.edit_text(
             "❌ Не удалось найти активное закрепленное сообщение для удаления",
-            reply_markup=get_admin_messages_keyboard(db_user.language),
+            reply_markup=get_admin_messages_keyboard(db_user.language_code),
             parse_mode="HTML",
         )
         await state.clear()
@@ -368,7 +368,7 @@ async def delete_pinned_message(
         f"✅ Откреплено: {unpinned_count}\n"
         f"⚠️ Ошибок: {failed_count}\n\n"
         "Новое сообщение можно задать кнопкой \"Обновить\".",
-        reply_markup=get_admin_messages_keyboard(db_user.language),
+        reply_markup=get_admin_messages_keyboard(db_user.language_code),
         parse_mode="HTML",
     )
     await state.clear()
@@ -382,7 +382,7 @@ async def process_pinned_message_update(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     media_type: Optional[str] = None
     media_file_id: Optional[str] = None
 
@@ -425,7 +425,7 @@ async def process_pinned_message_update(
             "• <b>Разослать сейчас</b> — отправит и закрепит у всех активных пользователей\n"
             "• <b>Только при /start</b> — пользователи увидят при следующем запуске бота",
         ),
-        reply_markup=get_pinned_broadcast_confirm_keyboard(db_user.language, pinned_message.id),
+        reply_markup=get_pinned_broadcast_confirm_keyboard(db_user.language_code, pinned_message.id),
         parse_mode="HTML",
     )
     await state.set_state(AdminStates.confirming_pinned_broadcast)
@@ -440,7 +440,7 @@ async def handle_pinned_broadcast_now(
     db: AsyncSession,
 ):
     """Разослать закреплённое сообщение сейчас всем пользователям."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     # Получаем ID сообщения из callback_data
     pinned_message_id = int(callback.data.split(":")[1])
@@ -479,7 +479,7 @@ async def handle_pinned_broadcast_now(
             "✅ Отправлено: {sent}\n"
             "⚠️ Ошибок: {failed}",
         ).format(total=total, sent=sent_count, failed=failed_count),
-        reply_markup=get_admin_messages_keyboard(db_user.language),
+        reply_markup=get_admin_messages_keyboard(db_user.language_code),
         parse_mode="HTML",
     )
     await state.clear()
@@ -494,7 +494,7 @@ async def handle_pinned_broadcast_skip(
     db: AsyncSession,
 ):
     """Пропустить рассылку — пользователи увидят при /start."""
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await callback.message.edit_text(
         texts.t(
@@ -502,7 +502,7 @@ async def handle_pinned_broadcast_skip(
             "✅ <b>Закрепленное сообщение сохранено</b>\n\n"
             "Рассылка не выполнена. Пользователи увидят сообщение при следующем вводе /start.",
         ),
-        reply_markup=get_admin_messages_keyboard(db_user.language),
+        reply_markup=get_admin_messages_keyboard(db_user.language_code),
         parse_mode="HTML",
     )
     await state.clear()
@@ -518,7 +518,7 @@ async def show_broadcast_targets(
     await callback.message.edit_text(
         "🎯 <b>Выбор целевой аудитории</b>\n\n"
         "Выберите категорию пользователей для рассылки:",
-        reply_markup=get_broadcast_target_keyboard(db_user.language),
+        reply_markup=get_broadcast_target_keyboard(db_user.language_code),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -632,7 +632,7 @@ async def show_messages_history(
 ━━━━━━━━━━━━━━━━━━━━━━━
 """
         
-        keyboard = get_broadcast_history_keyboard(page, total_pages, db_user.language).inline_keyboard
+        keyboard = get_broadcast_history_keyboard(page, total_pages, db_user.language_code).inline_keyboard
     
     await callback.message.edit_text(
         text,
@@ -677,7 +677,7 @@ async def show_custom_broadcast(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_custom_criteria_keyboard(db_user.language),
+        reply_markup=get_custom_criteria_keyboard(db_user.language_code),
         parse_mode="HTML" 
     )
     await callback.answer()
@@ -801,7 +801,7 @@ async def process_broadcast_message(
         "Вы можете добавить к сообщению фото, видео или документ.\n"
         "Или пропустить этот шаг.\n\n"
         "Выберите тип медиа:",
-        reply_markup=get_broadcast_media_keyboard(db_user.language),
+        reply_markup=get_broadcast_media_keyboard(db_user.language_code),
         parse_mode="HTML"
     )
 
@@ -930,13 +930,13 @@ async def show_media_preview(
             chat_id=message.chat.id,
             photo=media_file_id,
             caption=preview_text,
-            reply_markup=get_media_confirm_keyboard(db_user.language),
+            reply_markup=get_media_confirm_keyboard(db_user.language_code),
             parse_mode="HTML"
         )
     else:
         # Для других типов медиа или если нет фото, используем обычное сообщение
         await _original_answer(message, preview_text, 
-                             reply_markup=get_media_confirm_keyboard(db_user.language), 
+                             reply_markup=get_media_confirm_keyboard(db_user.language_code), 
                              parse_mode="HTML")
 
 @admin_required
@@ -974,7 +974,7 @@ async def handle_change_media(
         callback,
         "🖼️ <b>Изменение медиафайла</b>\n\n"
         "Выберите новый тип медиа:",
-        reply_markup=get_broadcast_media_keyboard(db_user.language),
+        reply_markup=get_broadcast_media_keyboard(db_user.language_code),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -1017,7 +1017,7 @@ async def show_button_selector_callback(
 """
 
     keyboard = get_updated_message_buttons_selector_keyboard_with_media(
-        selected_buttons, has_media, db_user.language
+        selected_buttons, has_media, db_user.language_code
     )
 
     # Проверяем, является ли текущее сообщение медиа-сообщением
@@ -1084,7 +1084,7 @@ async def show_button_selector(
 """
 
     keyboard = get_updated_message_buttons_selector_keyboard_with_media(
-        selected_buttons, has_media, db_user.language
+        selected_buttons, has_media, db_user.language_code
     )
 
     await message.answer(
@@ -1118,7 +1118,7 @@ async def toggle_button_selection(
 
     has_media = data.get('has_media', False)
     keyboard = get_updated_message_buttons_selector_keyboard_with_media(
-        selected_buttons, has_media, db_user.language
+        selected_buttons, has_media, db_user.language_code
     )
 
     await callback.message.edit_reply_markup(reply_markup=keyboard)
@@ -1156,7 +1156,7 @@ async def confirm_button_selection(
         media_info = f"\n🖼️ <b>Медиафайл:</b> {media_type_names.get(media_type, media_type)}"
     
     ordered_keys = [button_key for row in BUTTON_ROWS for button_key in row]
-    button_labels = get_broadcast_button_labels(db_user.language)
+    button_labels = get_broadcast_button_labels(db_user.language_code)
     selected_names = [button_labels[key] for key in ordered_keys if key in selected_buttons]
     if selected_names:
         buttons_info = f"\n📘 <b>Кнопки:</b> {', '.join(selected_names)}"
@@ -1282,7 +1282,7 @@ async def confirm_broadcast(
     sent_count = 0
     failed_count = 0
     
-    broadcast_keyboard = create_broadcast_keyboard(selected_buttons, db_user.language)
+    broadcast_keyboard = create_broadcast_keyboard(selected_buttons, db_user.language_code)
     
     # Ограничение на количество одновременных отправок и базовая задержка между сообщениями,
     # чтобы избежать перегрузки бота и лимитов Telegram при больших рассылках

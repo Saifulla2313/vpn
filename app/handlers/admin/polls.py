@@ -466,14 +466,14 @@ def _build_send_confirmation_keyboard(poll_id: int, target: str, language: str) 
 @error_handler
 async def show_polls_panel(callback: types.CallbackQuery, db_user: User, db: AsyncSession):
     polls = await list_polls(db)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     lines = [texts.t("ADMIN_POLLS_LIST_TITLE", "🗳️ <b>Опросы</b>"), ""]
     if not polls:
         lines.append(texts.t("ADMIN_POLLS_LIST_EMPTY", "Опросов пока нет."))
     else:
         for poll in polls[:10]:
-            reward = _format_reward_text(poll, db_user.language)
+            reward = _format_reward_text(poll, db_user.language_code)
             lines.append(
                 f"• <b>{html.escape(poll.title)}</b> — "
                 f"{texts.t('ADMIN_POLLS_QUESTIONS_COUNT', 'Вопросов: {count}').format(count=len(poll.questions))}\n"
@@ -482,7 +482,7 @@ async def show_polls_panel(callback: types.CallbackQuery, db_user: User, db: Asy
 
     await callback.message.edit_text(
         "\n".join(lines),
-        reply_markup=_build_polls_keyboard(polls, db_user.language),
+        reply_markup=_build_polls_keyboard(polls, db_user.language_code),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -496,7 +496,7 @@ async def start_poll_creation(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await state.clear()
     await state.set_state(PollCreationStates.waiting_for_title)
     await _safe_delete_message(callback.message)
@@ -520,7 +520,7 @@ async def process_poll_title(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     state_data = await state.get_data()
 
     if message.text == "/cancel":
@@ -529,7 +529,7 @@ async def process_poll_title(
             "ADMIN_POLLS_CREATION_CANCELLED",
             "❌ Создание опроса отменено.",
         )
-        keyboard = get_admin_communications_submenu_keyboard(db_user.language)
+        keyboard = get_admin_communications_submenu_keyboard(db_user.language_code)
         updated = await _edit_creation_message(
             message.bot,
             state_data,
@@ -590,7 +590,7 @@ async def process_poll_description(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     state_data = await state.get_data()
 
     if message.text == "/cancel":
@@ -599,7 +599,7 @@ async def process_poll_description(
             "ADMIN_POLLS_CREATION_CANCELLED",
             "❌ Создание опроса отменено.",
         )
-        keyboard = get_admin_communications_submenu_keyboard(db_user.language)
+        keyboard = get_admin_communications_submenu_keyboard(db_user.language_code)
         updated = await _edit_creation_message(
             message.bot,
             state_data,
@@ -680,7 +680,7 @@ async def process_poll_reward(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     state_data = await state.get_data()
 
     if message.text == "/cancel":
@@ -689,7 +689,7 @@ async def process_poll_reward(
             "ADMIN_POLLS_CREATION_CANCELLED",
             "❌ Создание опроса отменено.",
         )
-        keyboard = get_admin_communications_submenu_keyboard(db_user.language)
+        keyboard = get_admin_communications_submenu_keyboard(db_user.language_code)
         updated = await _edit_creation_message(
             message.bot,
             state_data,
@@ -753,7 +753,7 @@ async def process_poll_question(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     state_data = await state.get_data()
 
     if message.text == "/cancel":
@@ -762,7 +762,7 @@ async def process_poll_question(
             "ADMIN_POLLS_CREATION_CANCELLED",
             "❌ Создание опроса отменено.",
         )
-        keyboard = get_admin_communications_submenu_keyboard(db_user.language)
+        keyboard = get_admin_communications_submenu_keyboard(db_user.language_code)
         updated = await _edit_creation_message(
             message.bot,
             state_data,
@@ -818,7 +818,7 @@ async def process_poll_question(
             questions=questions,
         )
 
-        reward_text = _format_reward_text(poll, db_user.language)
+        reward_text = _format_reward_text(poll, db_user.language_code)
         result_text = texts.t(
             "ADMIN_POLLS_CREATION_FINISHED",
             (
@@ -832,7 +832,7 @@ async def process_poll_question(
             reward=reward_text,
         )
 
-        keyboard = _build_polls_keyboard(await list_polls(db), db_user.language)
+        keyboard = _build_polls_keyboard(await list_polls(db), db_user.language_code)
         updated = await _edit_creation_message(
             message.bot,
             form_data,
@@ -939,10 +939,10 @@ async def show_poll_details(
         await callback.answer("❌ Опрос не найден", show_alert=True)
         return
 
-    text = await _render_poll_details(poll, db_user.language)
+    text = await _render_poll_details(poll, db_user.language_code)
     await callback.message.edit_text(
         text,
-        reply_markup=_build_poll_details_keyboard(poll.id, db_user.language),
+        reply_markup=_build_poll_details_keyboard(poll.id, db_user.language_code),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -961,10 +961,10 @@ async def start_poll_send(
         await callback.answer("❌ Опрос не найден", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await callback.message.edit_text(
         texts.t("ADMIN_POLLS_SEND_CHOOSE_TARGET", "🎯 Выберите аудиторию для отправки опроса:"),
-        reply_markup=_build_target_keyboard(poll.id, db_user.language),
+        reply_markup=_build_target_keyboard(poll.id, db_user.language_code),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -979,11 +979,11 @@ async def show_custom_target_menu(
 ):
     poll_id = int(callback.data.split(":")[1])
     await callback.message.edit_text(
-        get_texts(db_user.language).t(
+        get_texts(db_user.language_code).t(
             "ADMIN_POLLS_CUSTOM_PROMPT",
             "Выберите дополнительный критерий аудитории:",
         ),
-        reply_markup=_build_custom_target_keyboard(poll_id, db_user.language),
+        reply_markup=_build_custom_target_keyboard(poll_id, db_user.language_code),
     )
     await callback.answer()
 
@@ -1002,7 +1002,7 @@ async def _show_send_confirmation(
         return
 
     audience_name = get_target_display_name(target)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     confirmation_text = texts.t(
         "ADMIN_POLLS_SEND_CONFIRM",
         "📤 Отправить опрос «{title}» аудитории «{audience}»? Пользователей: {count}",
@@ -1010,7 +1010,7 @@ async def _show_send_confirmation(
 
     await callback.message.edit_text(
         confirmation_text,
-        reply_markup=_build_send_confirmation_keyboard(poll_id, target, db_user.language),
+        reply_markup=_build_send_confirmation_keyboard(poll_id, target, db_user.language_code),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -1069,7 +1069,7 @@ async def confirm_poll_send(
     else:
         users = await get_target_users(db, target)
 
-    user_language = db_user.language
+    user_language = db_user.language_code
     texts = get_texts(user_language)
     await callback.message.edit_text(
         texts.t("ADMIN_POLLS_SENDING", "📤 Запускаю отправку опроса..."),
@@ -1105,7 +1105,7 @@ async def show_poll_stats(
         return
 
     stats = await get_poll_statistics(db, poll_id)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     reward_sum = settings.format_price(stats["reward_sum_kopeks"])
     lines = [texts.t("ADMIN_POLLS_STATS_HEADER", "📊 <b>Статистика опроса</b>"), ""]
@@ -1133,7 +1133,7 @@ async def show_poll_stats(
 
     await callback.message.edit_text(
         "\n".join(lines),
-        reply_markup=_build_poll_details_keyboard(poll.id, db_user.language),
+        reply_markup=_build_poll_details_keyboard(poll.id, db_user.language_code),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -1152,7 +1152,7 @@ async def confirm_poll_delete(
         await callback.answer("❌ Опрос не найден", show_alert=True)
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await callback.message.edit_text(
         texts.t(
             "ADMIN_POLLS_CONFIRM_DELETE",
@@ -1188,12 +1188,12 @@ async def delete_poll_handler(
 ):
     poll_id = int(callback.data.split(":")[1])
     success = await delete_poll(db, poll_id)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if success:
         await callback.message.edit_text(
             texts.t("ADMIN_POLLS_DELETED", "🗑️ Опрос удалён."),
-            reply_markup=_build_polls_keyboard(await list_polls(db), db_user.language),
+            reply_markup=_build_polls_keyboard(await list_polls(db), db_user.language_code),
         )
     else:
         await callback.answer("❌ Опрос не найден", show_alert=True)

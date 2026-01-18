@@ -27,7 +27,7 @@ async def show_maintenance_panel(
     db: AsyncSession,
     state: FSMContext
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     
     status_info = maintenance_service.get_status_info()
     
@@ -88,7 +88,7 @@ async def show_maintenance_panel(
     await callback.message.edit_text(
         message_text,
         reply_markup=get_maintenance_keyboard(
-            db_user.language, 
+            db_user.language_code, 
             status_info["is_active"], 
             status_info["monitoring_active"],
             panel_status.get("has_issues", False)
@@ -377,11 +377,11 @@ async def back_to_admin_panel(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     
     await callback.message.edit_text(
         texts.ADMIN_PANEL,
-        reply_markup=get_admin_main_keyboard(db_user.language)
+        reply_markup=get_admin_main_keyboard(db_user.language_code)
     )
     await callback.answer()
 

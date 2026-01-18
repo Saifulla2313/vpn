@@ -52,7 +52,7 @@ async def view_current_rules(
     db: AsyncSession
 ):
     try:
-        current_rules = await get_current_rules_content(db, db_user.language)
+        current_rules = await get_current_rules_content(db, db_user.language_code)
         
         is_valid, error_msg = validate_html_tags(current_rules)
         warning = ""
@@ -89,7 +89,7 @@ async def start_edit_rules(
     db: AsyncSession
 ):
     try:
-        current_rules = await get_current_rules_content(db, db_user.language)
+        current_rules = await get_current_rules_content(db, db_user.language_code)
         
         preview = current_rules[:500] + ('...' if len(current_rules) > 500 else '')
         
@@ -221,14 +221,14 @@ async def save_rules(
         await create_or_update_rules(
             db=db,
             content=new_rules,
-            language=db_user.language
+            language=db_user.language_code
         )
         
         from app.localization.texts import clear_rules_cache
         clear_rules_cache()
         
         from app.localization.texts import refresh_rules_cache
-        await refresh_rules_cache(db_user.language)
+        await refresh_rules_cache(db_user.language_code)
         
         await callback.message.edit_text(
             "✅ <b>Правила сервиса успешно обновлены!</b>\n\n"
@@ -290,7 +290,7 @@ async def confirm_clear_rules(
     db: AsyncSession
 ):
     try:
-        await clear_all_rules(db, db_user.language)
+        await clear_all_rules(db, db_user.language_code)
         
         from app.localization.texts import clear_rules_cache
         clear_rules_cache()

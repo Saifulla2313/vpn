@@ -22,7 +22,7 @@ async def show_trials_panel(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     stats = await get_trial_statistics(db)
     message = texts.t("ADMIN_TRIALS_TITLE", "🧪 Управление триалами") + "\n\n" + texts.t(
@@ -38,7 +38,7 @@ async def show_trials_panel(
 
     await callback.message.edit_text(
         message,
-        reply_markup=get_admin_trials_keyboard(db_user.language),
+        reply_markup=get_admin_trials_keyboard(db_user.language_code),
     )
     await callback.answer()
 
@@ -50,7 +50,7 @@ async def reset_trials(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     reset_count = await reset_trials_for_users_without_paid_subscription(db)
     stats = await get_trial_statistics(db)
@@ -70,7 +70,7 @@ async def reset_trials(
 
     await callback.message.edit_text(
         message,
-        reply_markup=get_admin_trials_keyboard(db_user.language),
+        reply_markup=get_admin_trials_keyboard(db_user.language_code),
     )
     await callback.answer(texts.t("ADMIN_TRIALS_RESET_TOAST", "✅ Сброс завершен"))
 

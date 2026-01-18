@@ -30,7 +30,7 @@ async def show_reports_menu(
     await callback.message.edit_text(
         "📊 <b>Отчеты</b>\n\n"
         "Выберите период, чтобы отправить отчет в админский топик.",
-        reply_markup=get_admin_reports_keyboard(db_user.language),
+        reply_markup=get_admin_reports_keyboard(db_user.language_code),
         parse_mode="HTML",
     )
     await callback.answer()
@@ -43,7 +43,7 @@ async def send_daily_report(
     db_user: User,
     db: AsyncSession,
 ) -> None:
-    await _send_report(callback, ReportPeriod.DAILY, db_user.language)
+    await _send_report(callback, ReportPeriod.DAILY, db_user.language_code)
 
 
 @admin_required
@@ -53,7 +53,7 @@ async def send_weekly_report(
     db_user: User,
     db: AsyncSession,
 ) -> None:
-    await _send_report(callback, ReportPeriod.WEEKLY, db_user.language)
+    await _send_report(callback, ReportPeriod.WEEKLY, db_user.language_code)
 
 
 @admin_required
@@ -63,7 +63,7 @@ async def send_monthly_report(
     db_user: User,
     db: AsyncSession,
 ) -> None:
-    await _send_report(callback, ReportPeriod.MONTHLY, db_user.language)
+    await _send_report(callback, ReportPeriod.MONTHLY, db_user.language_code)
 
 
 async def _send_report(
@@ -96,7 +96,7 @@ async def close_report_message(
     db_user: User,
     db: AsyncSession,
 ) -> None:
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     try:
         await callback.message.delete()

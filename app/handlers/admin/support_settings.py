@@ -142,13 +142,13 @@ async def show_support_settings(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
-    desc = SupportSettingsService.get_support_info_text(db_user.language)
+    texts = get_texts(db_user.language_code)
+    desc = SupportSettingsService.get_support_info_text(db_user.language_code)
     await callback.message.edit_text(
         texts.t("ADMIN_SUPPORT_SETTINGS_TITLE", "🛟 <b>Настройки поддержки</b>") + "\n\n" +
         texts.t("ADMIN_SUPPORT_SETTINGS_DESCRIPTION", "Режим работы и видимость в меню. Ниже текущее описание меню поддержки:") + "\n\n" +
         desc,
-        reply_markup=_get_support_settings_keyboard(db_user.language),
+        reply_markup=_get_support_settings_keyboard(db_user.language_code),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -198,7 +198,7 @@ class SupportAdvancedStates(StatesGroup):
 @admin_required
 @error_handler
 async def start_set_sla_minutes(callback: types.CallbackQuery, db_user: User, db: AsyncSession, state: FSMContext):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await callback.message.edit_text(
         texts.t(
             "ADMIN_SUPPORT_SLA_SETUP_PROMPT",
@@ -216,7 +216,7 @@ async def start_set_sla_minutes(callback: types.CallbackQuery, db_user: User, db
 @admin_required
 @error_handler
 async def handle_sla_minutes(message: types.Message, db_user: User, db: AsyncSession, state: FSMContext):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     text = (message.text or "").strip()
     try:
         minutes = int(text)
@@ -236,7 +236,7 @@ async def handle_sla_minutes(message: types.Message, db_user: User, db: AsyncSes
 @admin_required
 @error_handler
 async def start_add_moderator(callback: types.CallbackQuery, db_user: User, db: AsyncSession, state: FSMContext):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await callback.message.edit_text(
         texts.t(
             "ADMIN_SUPPORT_ASSIGN_MODERATOR_PROMPT",
@@ -254,7 +254,7 @@ async def start_add_moderator(callback: types.CallbackQuery, db_user: User, db: 
 @admin_required
 @error_handler
 async def start_remove_moderator(callback: types.CallbackQuery, db_user: User, db: AsyncSession, state: FSMContext):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await callback.message.edit_text(
         texts.t(
             "ADMIN_SUPPORT_REMOVE_MODERATOR_PROMPT",
@@ -274,7 +274,7 @@ async def start_remove_moderator(callback: types.CallbackQuery, db_user: User, d
 @admin_required
 @error_handler
 async def handle_moderator_id(message: types.Message, db_user: User, db: AsyncSession, state: FSMContext):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
     action = data.get("action", "add")
     text = (message.text or "").strip()
@@ -307,7 +307,7 @@ async def handle_moderator_id(message: types.Message, db_user: User, db: AsyncSe
 @admin_required
 @error_handler
 async def list_moderators(callback: types.CallbackQuery, db_user: User, db: AsyncSession):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     moderators = SupportSettingsService.get_moderators()
     if not moderators:
         await callback.answer(texts.t("ADMIN_SUPPORT_MODERATORS_EMPTY", "Список пуст"), show_alert=True)
@@ -347,8 +347,8 @@ async def set_mode_both(callback: types.CallbackQuery, db_user: User, db: AsyncS
 @admin_required
 @error_handler
 async def start_edit_desc(callback: types.CallbackQuery, db_user: User, db: AsyncSession, state: FSMContext):
-    texts = get_texts(db_user.language)
-    current_desc_html = SupportSettingsService.get_support_info_text(db_user.language)
+    texts = get_texts(db_user.language_code)
+    current_desc_html = SupportSettingsService.get_support_info_text(db_user.language_code)
     # plain text for display-only code block
     current_desc_plain = re.sub(r"<[^>]+>", "", current_desc_html)
 
@@ -393,9 +393,9 @@ async def start_edit_desc(callback: types.CallbackQuery, db_user: User, db: Asyn
 @admin_required
 @error_handler
 async def handle_new_desc(message: types.Message, db_user: User, db: AsyncSession, state: FSMContext):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     new_text = message.html_text or message.text
-    SupportSettingsService.set_support_info_text(db_user.language, new_text)
+    SupportSettingsService.set_support_info_text(db_user.language_code, new_text)
     await state.clear()
     markup = types.InlineKeyboardMarkup(
         inline_keyboard=[[types.InlineKeyboardButton(text=texts.t("DELETE_MESSAGE", "🗑 Удалить"), callback_data="admin_support_delete_msg")]]
@@ -407,8 +407,8 @@ async def handle_new_desc(message: types.Message, db_user: User, db: AsyncSessio
 @error_handler
 async def send_desc_copy(callback: types.CallbackQuery, db_user: User, db: AsyncSession):
     # send plain text for easy copying
-    texts = get_texts(db_user.language)
-    current_desc_html = SupportSettingsService.get_support_info_text(db_user.language)
+    texts = get_texts(db_user.language_code)
+    current_desc_html = SupportSettingsService.get_support_info_text(db_user.language_code)
     current_desc_plain = re.sub(r"<[^>]+>", "", current_desc_html)
     # attach delete button to the sent message
     markup = types.InlineKeyboardMarkup(
@@ -434,7 +434,7 @@ async def delete_sent_message(callback: types.CallbackQuery, db_user: User, db: 
         may_delete = (settings.is_admin(callback.from_user.id) or SupportSettingsService.is_moderator(callback.from_user.id))
     except Exception:
         may_delete = False
-    texts = get_texts(db_user.language if db_user else 'ru')
+    texts = get_texts(db_user.language_code if db_user else 'ru')
     if not may_delete:
         await callback.answer(texts.ACCESS_DENIED, show_alert=True)
         return

@@ -47,7 +47,7 @@ async def show_promocodes_menu(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_admin_promocodes_keyboard(db_user.language)
+        reply_markup=get_admin_promocodes_keyboard(db_user.language_code)
     )
     await callback.answer()
 
@@ -114,7 +114,7 @@ async def show_promocodes_list(
     
     if total_pages > 1:
         pagination_row = get_admin_pagination_keyboard(
-            page, total_pages, "admin_promo_list", "admin_promocodes", db_user.language
+            page, total_pages, "admin_promo_list", "admin_promocodes", db_user.language_code
         ).inline_keyboard[0]
         keyboard.append(pagination_row)
     
@@ -478,7 +478,7 @@ async def start_promocode_creation(
     await callback.message.edit_text(
         "🎫 <b>Создание промокода</b>\n\n"
         "Выберите тип промокода:",
-        reply_markup=get_promocode_type_keyboard(db_user.language)
+        reply_markup=get_promocode_type_keyboard(db_user.language_code)
     )
     await callback.answer()
 

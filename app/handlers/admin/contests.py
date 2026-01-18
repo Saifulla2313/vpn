@@ -110,7 +110,7 @@ async def show_contests_menu(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not settings.is_contests_enabled():
         await callback.message.edit_text(
@@ -118,14 +118,14 @@ async def show_contests_menu(
                 "ADMIN_CONTESTS_DISABLED",
                 "Конкурсы отключены через переменную окружения CONTESTS_ENABLED.",
             ),
-            reply_markup=get_admin_contests_root_keyboard(db_user.language),
+            reply_markup=get_admin_contests_root_keyboard(db_user.language_code),
         )
         await callback.answer()
         return
 
     await callback.message.edit_text(
         texts.t("ADMIN_CONTESTS_TITLE", "🏆 <b>Конкурсы</b>\n\nВыберите действие:"),
-        reply_markup=get_admin_contests_root_keyboard(db_user.language),
+        reply_markup=get_admin_contests_root_keyboard(db_user.language_code),
     )
     await callback.answer()
 
@@ -137,11 +137,11 @@ async def show_referral_contests_menu(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await callback.message.edit_text(
         texts.t("ADMIN_CONTESTS_TITLE", "🏆 <b>Конкурсы</b>\n\nВыберите действие:"),
-        reply_markup=get_admin_contests_keyboard(db_user.language),
+        reply_markup=get_admin_contests_keyboard(db_user.language_code),
     )
     await callback.answer()
 
@@ -155,7 +155,7 @@ async def list_contests(
 ):
     if not settings.is_contests_enabled():
         await callback.answer(
-            get_texts(db_user.language).t(
+            get_texts(db_user.language_code).t(
                 "ADMIN_CONTESTS_DISABLED",
                 "Конкурсы отключены через переменную окружения CONTESTS_ENABLED.",
             ),
@@ -176,7 +176,7 @@ async def list_contests(
     offset = (page - 1) * PAGE_SIZE
 
     contests = await list_referral_contests(db, limit=PAGE_SIZE, offset=offset)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     lines = [texts.t("ADMIN_CONTESTS_LIST_HEADER", "🏆 <b>Конкурсы</b>\n")]
 
@@ -206,7 +206,7 @@ async def list_contests(
         total_pages,
         "admin_contests_list",
         back_callback="admin_contests",
-        language=db_user.language,
+        language=db_user.language_code,
     )
     keyboard_rows.extend(pagination.inline_keyboard)
 
@@ -226,14 +226,14 @@ async def show_contest_details(
 ):
     if not settings.is_contests_enabled():
         await callback.answer(
-            get_texts(db_user.language).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
+            get_texts(db_user.language_code).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
             show_alert=True,
         )
         return
 
     contest_id = int(callback.data.split("_")[-1])
     contest = await get_referral_contest(db, contest_id)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not contest:
         await callback.answer(texts.t("ADMIN_CONTEST_NOT_FOUND", "Конкурс не найден."), show_alert=True)
@@ -269,7 +269,7 @@ async def show_contest_details(
                 and (contest.end_at.replace(tzinfo=timezone.utc) if contest.end_at.tzinfo is None else contest.end_at)
                 < datetime.now(timezone.utc)
             ),
-            language=db_user.language,
+            language=db_user.language_code,
         ),
     )
     await callback.answer()
@@ -284,7 +284,7 @@ async def toggle_contest(
 ):
     if not settings.is_contests_enabled():
         await callback.answer(
-            get_texts(db_user.language).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
+            get_texts(db_user.language_code).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
             show_alert=True,
         )
         return
@@ -308,7 +308,7 @@ async def prompt_edit_summary_times(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     contest_id = int(callback.data.split("_")[-1])
     contest = await get_referral_contest(db, contest_id)
     if not contest:
@@ -344,7 +344,7 @@ async def process_edit_summary_times(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
     contest_id = data.get("contest_id")
     if not contest_id:
@@ -385,7 +385,7 @@ async def delete_contest(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     contest_id = int(callback.data.split("_")[-1])
     contest = await get_referral_contest(db, contest_id)
     if not contest:
@@ -414,14 +414,14 @@ async def show_leaderboard(
 ):
     if not settings.is_contests_enabled():
         await callback.answer(
-            get_texts(db_user.language).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
+            get_texts(db_user.language_code).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
             show_alert=True,
         )
         return
 
     contest_id = int(callback.data.split("_")[-1])
     contest = await get_referral_contest(db, contest_id)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not contest:
         await callback.answer(texts.t("ADMIN_CONTEST_NOT_FOUND", "Конкурс не найден."), show_alert=True)
@@ -441,7 +441,7 @@ async def show_leaderboard(
     await callback.message.edit_text(
         "\n".join(lines),
         reply_markup=get_referral_contest_manage_keyboard(
-            contest_id, is_active=contest.is_active, language=db_user.language
+            contest_id, is_active=contest.is_active, language=db_user.language_code
         ),
     )
     await callback.answer()
@@ -455,7 +455,7 @@ async def start_contest_creation(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     if not settings.is_contests_enabled():
         await callback.answer(
             texts.t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
@@ -470,7 +470,7 @@ async def start_contest_creation(
             "ADMIN_CONTEST_MODE_PROMPT",
             "Выберите условие зачёта: реферал должен купить подписку или достаточно регистрации.",
         ),
-        reply_markup=get_contest_mode_keyboard(db_user.language),
+        reply_markup=get_contest_mode_keyboard(db_user.language_code),
     )
     await callback.answer()
 
@@ -483,7 +483,7 @@ async def select_contest_mode(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     mode = "referral_paid" if callback.data == "admin_contest_mode_paid" else "referral_registered"
     await state.update_data(contest_type=mode)
     await state.set_state(AdminStates.creating_referral_contest_title)
@@ -498,7 +498,7 @@ async def select_contest_mode(
 @error_handler
 async def process_title(message: types.Message, state: FSMContext, db_user, db: AsyncSession):
     title = message.text.strip()
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     await state.update_data(title=title)
     await state.set_state(AdminStates.creating_referral_contest_description)
@@ -516,7 +516,7 @@ async def process_description(message: types.Message, state: FSMContext, db_user
 
     await state.update_data(description=description)
     await state.set_state(AdminStates.creating_referral_contest_prize)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await message.answer(
         texts.t("ADMIN_CONTEST_ENTER_PRIZE", "Укажите призы/выгоды конкурса (или '-' чтобы пропустить):")
     )
@@ -531,7 +531,7 @@ async def process_prize(message: types.Message, state: FSMContext, db_user, db: 
 
     await state.update_data(prize=prize)
     await state.set_state(AdminStates.creating_referral_contest_start)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     await message.answer(
         texts.t(
             "ADMIN_CONTEST_ENTER_START",
@@ -545,7 +545,7 @@ async def process_prize(message: types.Message, state: FSMContext, db_user, db: 
 async def process_start_date(message: types.Message, state: FSMContext, db_user, db: AsyncSession):
     tz = _ensure_timezone(settings.TIMEZONE)
     start_dt = _parse_local_datetime(message.text, tz)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not start_dt:
         await message.answer(
@@ -568,7 +568,7 @@ async def process_start_date(message: types.Message, state: FSMContext, db_user,
 async def process_end_date(message: types.Message, state: FSMContext, db_user, db: AsyncSession):
     tz = _ensure_timezone(settings.TIMEZONE)
     end_dt = _parse_local_datetime(message.text, tz)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not end_dt:
         await message.answer(
@@ -603,7 +603,7 @@ async def process_end_date(message: types.Message, state: FSMContext, db_user, d
 async def finalize_contest_creation(message: types.Message, state: FSMContext, db_user, db: AsyncSession):
     times = _parse_times(message.text or "")
     summary_time = times[0] if times else _parse_time(message.text)
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not summary_time:
         await message.answer(
@@ -654,7 +654,7 @@ async def finalize_contest_creation(message: types.Message, state: FSMContext, d
         reply_markup=get_referral_contest_manage_keyboard(
             contest.id,
             is_active=contest.is_active,
-            language=db_user.language,
+            language=db_user.language_code,
         ),
     )
 
@@ -668,7 +668,7 @@ async def show_detailed_stats(
 ):
     if not settings.is_contests_enabled():
         await callback.answer(
-            get_texts(db_user.language).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
+            get_texts(db_user.language_code).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
             show_alert=True,
         )
         return
@@ -702,7 +702,7 @@ async def show_detailed_stats(
     await callback.message.edit_text(
         "\n".join(general_lines),
         reply_markup=get_referral_contest_manage_keyboard(
-            contest_id, is_active=contest.is_active, language=db_user.language
+            contest_id, is_active=contest.is_active, language=db_user.language_code
         ),
     )
 
@@ -754,7 +754,7 @@ async def show_detailed_stats_page(
         total_pages,
         f"admin_contest_detailed_stats_page_{contest_id}",
         back_callback=f"admin_contest_view_{contest_id}",
-        language=db_user.language,
+        language=db_user.language_code,
     )
 
     await callback.message.edit_text(
@@ -775,7 +775,7 @@ async def sync_contest(
     """Синхронизировать события конкурса с реальными платежами."""
     if not settings.is_contests_enabled():
         await callback.answer(
-            get_texts(db_user.language).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
+            get_texts(db_user.language_code).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
             show_alert=True,
         )
         return
@@ -855,7 +855,7 @@ async def sync_contest(
     await callback.message.edit_text(
         "\n".join(general_lines),
         reply_markup=get_referral_contest_manage_keyboard(
-            contest_id, is_active=contest.is_active, language=db_user.language
+            contest_id, is_active=contest.is_active, language=db_user.language_code
         ),
     )
 
@@ -870,7 +870,7 @@ async def debug_contest_transactions(
     """Показать транзакции рефералов конкурса для отладки."""
     if not settings.is_contests_enabled():
         await callback.answer(
-            get_texts(db_user.language).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
+            get_texts(db_user.language_code).t("ADMIN_CONTESTS_DISABLED", "Конкурсы отключены."),
             show_alert=True,
         )
         return

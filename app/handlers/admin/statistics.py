@@ -32,7 +32,7 @@ async def show_statistics_menu(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_admin_statistics_keyboard(db_user.language)
+        reply_markup=get_admin_statistics_keyboard(db_user.language_code)
     )
     await callback.answer()
 

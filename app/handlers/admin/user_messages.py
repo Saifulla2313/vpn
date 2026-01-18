@@ -99,7 +99,7 @@ async def show_user_messages_panel(
     db_user: User,
     db: AsyncSession
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     
     text = (
         "📢 <b>Управление сообщениями в главном меню</b>\n\n"
@@ -113,7 +113,7 @@ async def show_user_messages_panel(
     
     await callback.message.edit_text(
         text,
-        reply_markup=get_user_messages_keyboard(db_user.language),
+        reply_markup=get_user_messages_keyboard(db_user.language_code),
         parse_mode="HTML"
     )
     await callback.answer()
@@ -151,7 +151,7 @@ async def process_new_message_text(
         await state.clear()
         await message.answer(
             "❌ Добавление сообщения отменено.",
-            reply_markup=get_user_messages_keyboard(db_user.language)
+            reply_markup=get_user_messages_keyboard(db_user.language_code)
         )
         return
     
@@ -190,7 +190,7 @@ async def process_new_message_text(
             f"<b>Создано:</b> {new_message.created_at.strftime('%d.%m.%Y %H:%M')}\n\n"
             f"<b>Предварительный просмотр:</b>\n"
             f"<blockquote>{message_text}</blockquote>",
-            reply_markup=get_user_messages_keyboard(db_user.language),
+            reply_markup=get_user_messages_keyboard(db_user.language_code),
             parse_mode="HTML"
         )
         
@@ -199,7 +199,7 @@ async def process_new_message_text(
         await state.clear()
         await message.answer(
             "❌ Произошла ошибка при создании сообщения. Попробуйте еще раз.",
-            reply_markup=get_user_messages_keyboard(db_user.language)
+            reply_markup=get_user_messages_keyboard(db_user.language_code)
         )
 
 @admin_required
@@ -225,7 +225,7 @@ async def list_user_messages(
         await callback.message.edit_text(
             "📋 <b>Список сообщений</b>\n\n"
             "Сообщений пока нет. Добавьте первое сообщение!",
-            reply_markup=get_user_messages_keyboard(db_user.language),
+            reply_markup=get_user_messages_keyboard(db_user.language_code),
             parse_mode="HTML"
         )
         await callback.answer()
@@ -334,7 +334,7 @@ async def view_user_message(
     await callback.message.edit_text(
         text,
         reply_markup=get_message_actions_keyboard(
-            message_id, message.is_active, db_user.language
+            message_id, message.is_active, db_user.language_code
         ),
         parse_mode="HTML"
     )
@@ -479,7 +479,7 @@ async def process_edit_message_text(
         await state.clear()
         await message.answer(
             "❌ Редактирование отменено.",
-            reply_markup=get_user_messages_keyboard(db_user.language)
+            reply_markup=get_user_messages_keyboard(db_user.language_code)
         )
         return
     
@@ -524,14 +524,14 @@ async def process_edit_message_text(
                 f"<b>Обновлено:</b> {updated_message.updated_at.strftime('%d.%m.%Y %H:%M')}\n\n"
                 f"<b>Новый текст:</b>\n"
                 f"<blockquote>{sanitize_html(new_text)}</blockquote>",
-                reply_markup=get_user_messages_keyboard(db_user.language),
+                reply_markup=get_user_messages_keyboard(db_user.language_code),
                 parse_mode="HTML"
             )
         else:
             await state.clear()
             await message.answer(
                 "❌ Сообщение не найдено или ошибка обновления.",
-                reply_markup=get_user_messages_keyboard(db_user.language)
+                reply_markup=get_user_messages_keyboard(db_user.language_code)
             )
         
     except Exception as e:
@@ -539,7 +539,7 @@ async def process_edit_message_text(
         await state.clear()
         await message.answer(
             "❌ Произошла ошибка при обновлении сообщения.",
-            reply_markup=get_user_messages_keyboard(db_user.language)
+            reply_markup=get_user_messages_keyboard(db_user.language_code)
         )
 
 

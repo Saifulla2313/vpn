@@ -50,7 +50,7 @@ async def show_daily_contests(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     templates = await list_templates(db, enabled_only=False)
 
     lines = [texts.t("ADMIN_DAILY_CONTESTS_TITLE", "📆 Ежедневные конкурсы")]
@@ -92,7 +92,7 @@ async def show_daily_contest(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     try:
         template_id = int(callback.data.split("_")[-1])
     except Exception:
@@ -117,7 +117,7 @@ async def show_daily_contest(
     ]
     await callback.message.edit_text(
         "\n".join(lines),
-        reply_markup=get_daily_contest_manage_keyboard(tpl.id, tpl.is_enabled, db_user.language),
+        reply_markup=get_daily_contest_manage_keyboard(tpl.id, tpl.is_enabled, db_user.language_code),
     )
     await callback.answer()
 
@@ -129,7 +129,7 @@ async def toggle_daily_contest(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     template_id = int(callback.data.split("_")[-1])
     tpl = await _get_template(db, template_id)
     if not tpl:
@@ -148,7 +148,7 @@ async def start_round_now(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     template_id = int(callback.data.split("_")[-1])
     tpl = await _get_template(db, template_id)
     if not tpl:
@@ -186,7 +186,7 @@ async def manual_start_round(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     template_id = int(callback.data.split("_")[-1])
     tpl = await _get_template(db, template_id)
     if not tpl:
@@ -231,7 +231,7 @@ async def prompt_edit_field(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     parts = callback.data.split("_")
     template_id = int(parts[3])
     field = "_".join(parts[4:])  # поле может содержать подчеркивания
@@ -272,7 +272,7 @@ async def process_edit_field(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
     template_id = data.get("template_id")
     field = data.get("field")
@@ -324,7 +324,7 @@ async def edit_payload(
     db: AsyncSession,
     state: FSMContext,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     template_id = int(callback.data.split("_")[-1])
     tpl = await _get_template(db, template_id)
     if not tpl:
@@ -359,7 +359,7 @@ async def process_payload(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     data = await state.get_data()
     template_id = data.get("template_id")
     if not template_id:
@@ -404,7 +404,7 @@ async def start_all_contests(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     templates = await list_templates(db, enabled_only=True)
     if not templates:
         await callback.answer(texts.t("ADMIN_CONTESTS_EMPTY", "Нет активных конкурсов."), show_alert=True)
@@ -446,7 +446,7 @@ async def close_all_rounds(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     from app.database.crud.contest import get_active_rounds
     active_rounds = await get_active_rounds(db)
     if not active_rounds:
@@ -468,7 +468,7 @@ async def reset_all_attempts(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     from app.database.crud.contest import get_active_rounds
     active_rounds = await get_active_rounds(db)
     if not active_rounds:
@@ -491,7 +491,7 @@ async def reset_attempts(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     template_id = int(callback.data.split("_")[-1])
     tpl = await _get_template(db, template_id)
     if not tpl:
@@ -516,7 +516,7 @@ async def close_round(
     db_user,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     template_id = int(callback.data.split("_")[-1])
     tpl = await _get_template(db, template_id)
     if not tpl:

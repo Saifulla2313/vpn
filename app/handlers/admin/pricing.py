@@ -918,7 +918,7 @@ async def show_pricing_menu(
     db: AsyncSession,
     state: FSMContext,
 ) -> None:
-    text, keyboard = _build_overview(db_user.language)
+    text, keyboard = _build_overview(db_user.language_code)
     await _render_message(callback.message, text, keyboard)
     await state.clear()
     await callback.answer()
@@ -933,7 +933,7 @@ async def show_pricing_section(
     state: FSMContext,
 ) -> None:
     section = callback.data.split(":", 1)[1]
-    text, keyboard = _build_section(section, db_user.language)
+    text, keyboard = _build_section(section, db_user.language_code)
     await _render_message(callback.message, text, keyboard)
     await state.clear()
     await callback.answer()
@@ -948,8 +948,8 @@ async def start_price_edit(
     state: FSMContext,
 ) -> None:
     _, section, key = callback.data.split(":", 2)
-    texts = get_texts(db_user.language)
-    label = _resolve_label(section, key, db_user.language)
+    texts = get_texts(db_user.language_code)
+    label = _resolve_label(section, key, db_user.language_code)
 
     await state.update_data(
         pricing_key=key,
@@ -993,8 +993,8 @@ async def start_setting_edit(
 
     key = _decode_setting_callback_key(raw_key)
     entry = SETTING_ENTRY_BY_KEY.get(key)
-    texts = get_texts(db_user.language)
-    lang_code = _language_code(db_user.language)
+    texts = get_texts(db_user.language_code)
+    lang_code = _language_code(db_user.language_code)
     label = entry.label(lang_code) if entry else key
     current_value = bot_configuration_service.get_current_value(key)
     formatted_current = bot_configuration_service.format_value_human(key, current_value)
@@ -1084,7 +1084,7 @@ async def process_pricing_input(
     mode = data.get("pricing_mode", "price")
     stored_label = data.get("pricing_label")
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if not key:
         await message.answer(texts.t("ADMIN_PRICING_EDIT_EXPIRED", "Сессия редактирования истекла."))
@@ -1094,7 +1094,7 @@ async def process_pricing_input(
     raw_value = message.text or ""
     if raw_value.strip().lower() in {"cancel", "отмена"}:
         await state.clear()
-        section_text, section_keyboard = _build_section(section, db_user.language)
+        section_text, section_keyboard = _build_section(section, db_user.language_code)
         if message_id:
             await _render_message_by_id(
                 message.bot,
@@ -1135,7 +1135,7 @@ async def process_pricing_input(
         packages = _collect_traffic_packages()
         await _save_traffic_packages(db, packages, skip_if_same=True)
 
-    section_text, section_keyboard = _build_section(section, db_user.language)
+    section_text, section_keyboard = _build_section(section, db_user.language_code)
 
     if mode == "price":
         if message_id:
@@ -1154,7 +1154,7 @@ async def process_pricing_input(
         return
     else:
         entry = SETTING_ENTRY_BY_KEY.get(key)
-        lang_code = _language_code(db_user.language)
+        lang_code = _language_code(db_user.language_code)
         label = entry.label(lang_code) if entry else (stored_label or key)
         formatted_value = bot_configuration_service.format_value_human(
             key, bot_configuration_service.get_current_value(key)
@@ -1169,7 +1169,7 @@ async def process_pricing_input(
     await state.clear()
 
     if message_id:
-        section_text, section_keyboard = _build_section(section, db_user.language)
+        section_text, section_keyboard = _build_section(section, db_user.language_code)
         await _render_message_by_id(
             message.bot,
             message.chat.id,
@@ -1207,7 +1207,7 @@ async def toggle_setting(
     value_text = bot_configuration_service.format_value_human(key, new_value)
     await callback.answer(value_text, show_alert=False)
 
-    text, keyboard = _build_section(section, db_user.language)
+    text, keyboard = _build_section(section, db_user.language_code)
     await _render_message(callback.message, text, keyboard)
 
 
@@ -1241,7 +1241,7 @@ async def select_setting_choice(
         await callback.answer()
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     current_value = bot_configuration_service.get_current_value(key)
     if current_value == target_option.value:
         await callback.answer(
@@ -1255,7 +1255,7 @@ async def select_setting_choice(
     await bot_configuration_service.set_value(db, key, target_option.value)
     await db.commit()
 
-    lang_code = _language_code(db_user.language)
+    lang_code = _language_code(db_user.language_code)
     await callback.answer(
         texts.t(
             "ADMIN_PRICING_CHOICE_UPDATED",
@@ -1263,7 +1263,7 @@ async def select_setting_choice(
         ).format(label=target_option.label(lang_code))
     )
 
-    text, keyboard = _build_section(section, db_user.language)
+    text, keyboard = _build_section(section, db_user.language_code)
     await _render_message(callback.message, text, keyboard)
 
 
@@ -1282,7 +1282,7 @@ async def toggle_traffic_package(
         await callback.answer()
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     packages = _collect_traffic_packages()
 
     target_index = next((index for index, pkg in enumerate(packages) if pkg["gb"] == gb_value), None)
@@ -1314,7 +1314,7 @@ async def toggle_traffic_package(
     )
     await callback.answer(status_text)
 
-    text, keyboard = _build_traffic_options_section(db_user.language)
+    text, keyboard = _build_traffic_options_section(db_user.language_code)
     await _render_message(callback.message, text, keyboard)
 
 
@@ -1333,7 +1333,7 @@ async def toggle_period_option(
         await callback.answer()
         return
 
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     if target == "subscription":
         # Используем метод без фильтрации по ценам для админки
@@ -1375,7 +1375,7 @@ async def toggle_period_option(
 
     await callback.answer(action_text)
 
-    text, keyboard = _build_period_options_section(db_user.language)
+    text, keyboard = _build_period_options_section(db_user.language_code)
     await _render_message(callback.message, text, keyboard)
 
 

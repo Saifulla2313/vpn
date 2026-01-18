@@ -29,14 +29,14 @@ async def _build_overview(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     offer = await PublicOfferService.get_offer(
         db,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
     )
 
-    normalized_language = PublicOfferService.normalize_language(db_user.language)
+    normalized_language = PublicOfferService.normalize_language(db_user.language_code)
     has_content = bool(offer and offer.content and offer.content.strip())
 
     description = texts.t(
@@ -197,8 +197,8 @@ async def toggle_public_offer(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
-    updated_offer = await PublicOfferService.toggle_enabled(db, db_user.language)
+    texts = get_texts(db_user.language_code)
+    updated_offer = await PublicOfferService.toggle_enabled(db, db_user.language_code)
     logger.info(
         "Админ %s переключил показ публичной оферты: %s",
         db_user.telegram_id,
@@ -226,11 +226,11 @@ async def start_edit_public_offer(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
 
     offer = await PublicOfferService.get_offer(
         db,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
     )
 
@@ -302,7 +302,7 @@ async def cancel_edit_public_offer(
         reply_markup=markup,
     )
     await callback.answer(
-        get_texts(db_user.language).t(
+        get_texts(db_user.language_code).t(
             "ADMIN_PUBLIC_OFFER_EDIT_CANCELLED",
             "Редактирование оферты отменено.",
         )
@@ -317,7 +317,7 @@ async def process_public_offer_edit(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     new_text = message.text or ""
 
     if len(new_text) > 4000:
@@ -339,7 +339,7 @@ async def process_public_offer_edit(
         )
         return
 
-    await PublicOfferService.save_offer(db, db_user.language, new_text)
+    await PublicOfferService.save_offer(db, db_user.language_code, new_text)
     logger.info(
         "Админ %s обновил текст публичной оферты (%d символов)",
         db_user.telegram_id,
@@ -376,10 +376,10 @@ async def view_public_offer(
     db_user: User,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     offer = await PublicOfferService.get_offer(
         db,
-        db_user.language,
+        db_user.language_code,
         fallback=False,
     )
 
@@ -463,7 +463,7 @@ async def show_public_offer_html_help(
     state: FSMContext,
     db: AsyncSession,
 ):
-    texts = get_texts(db_user.language)
+    texts = get_texts(db_user.language_code)
     help_text = get_html_help_text()
 
     current_state = await state.get_state()
