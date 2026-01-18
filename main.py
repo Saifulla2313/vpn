@@ -566,5 +566,172 @@ async def get_subscription_key(telegram_id: int):
             return JSONResponse({"error": "Failed to fetch VPN key"}, status_code=500)
 
 
+@app.post("/miniapp/subscription")
+async def miniapp_subscription(request: Request):
+    """Get subscription data for miniapp via Telegram WebApp init_data"""
+    from app.database.crud.user import get_user_by_telegram_id
+    from app.database.crud.subscription import get_subscription_by_user_id
+    from app.remnawave_api import RemnaWaveAPI
+    from app.utils.telegram_webapp import parse_webapp_init_data, TelegramWebAppAuthError
+    
+    try:
+        data = await request.json()
+        init_data = data.get("init_data", "")
+        
+        try:
+            webapp_data = parse_webapp_init_data(init_data, settings.BOT_TOKEN)
+        except TelegramWebAppAuthError as e:
+            return JSONResponse({"error": str(e)}, status_code=401)
+        
+        telegram_user = webapp_data.get("user", {})
+        telegram_id = telegram_user.get("id")
+        
+        if not telegram_id:
+            return JSONResponse({"error": "Invalid user data"}, status_code=400)
+        
+        async with AsyncSessionLocal() as db:
+            user = await get_user_by_telegram_id(db, int(telegram_id))
+            if not user:
+                return JSONResponse({"error": "User not found"}, status_code=404)
+            
+            subscription = await get_subscription_by_user_id(db, user.id)
+            subscription_key = None
+            devices = []
+            
+            if user.remnawave_uuid:
+                try:
+                    async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
+                        remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
+                        if remnawave_user:
+                            subscription_key = remnawave_user.subscription_url
+                        
+                        devices_info = await api.get_user_devices(user.remnawave_uuid)
+                        if devices_info:
+                            devices = [{"name": d.get("name", "Device"), "hwid": d.get("hwid")} for d in devices_info]
+                except Exception as e:
+                    logger.warning(f"Failed to fetch RemnaWave data: {e}")
+            
+            balance_kopeks = getattr(user, 'balance_kopeks', 0) or (int(getattr(user, 'balance', 0) * 100) if hasattr(user, 'balance') else 0)
+            
+            bot_username = "plus_vpnn_bot"
+            referral_link = f"https://t.me/{bot_username}?start=ref{user.id}"
+            
+            return {
+                "user": {
+                    "id": user.id,
+                    "telegram_id": user.telegram_id,
+                    "balance_kopeks": balance_kopeks,
+                },
+                "subscription": {
+                    "status": subscription.status.value if subscription else "inactive",
+                    "expires_at": subscription.expires_at.isoformat() if subscription and subscription.expires_at else None,
+                } if subscription else None,
+                "subscription_key": subscription_key,
+                "devices": devices,
+                "referral_link": referral_link,
+                "referral_count": getattr(user, 'referral_count', 0) or 0,
+                "referral_earned": getattr(user, 'referral_earned', 0) or 0,
+            }
+    except Exception as e:
+        logger.error(f"Miniapp subscription error: {e}")
+        return JSONResponse({"error": "Internal error"}, status_code=500)
+
+
+@app.post("/miniapp/payments/create")
+async def miniapp_create_payment(request: Request):
+    """Create payment from miniapp"""
+    from app.database.crud.user import get_user_by_telegram_id
+    from app.database.crud.transaction import create_transaction
+    from app.utils.telegram_webapp import parse_webapp_init_data, TelegramWebAppAuthError
+    
+    try:
+        data = await request.json()
+        init_data = data.get("init_data", "")
+        amount_kopeks = data.get("amount_kopeks", 30000)
+        
+        try:
+            webapp_data = parse_webapp_init_data(init_data, settings.BOT_TOKEN)
+        except TelegramWebAppAuthError as e:
+            return JSONResponse({"error": str(e)}, status_code=401)
+        
+        telegram_user = webapp_data.get("user", {})
+        telegram_id = telegram_user.get("id")
+        
+        if not telegram_id:
+            return JSONResponse({"error": "Invalid user data"}, status_code=400)
+        
+        amount_rubles = amount_kopeks / 100
+        if amount_rubles < 50:
+            return JSONResponse({"error": "Minimum amount is 50₽"}, status_code=400)
+        
+        async with AsyncSessionLocal() as db:
+            user = await get_user_by_telegram_id(db, int(telegram_id))
+            if not user:
+                return JSONResponse({"error": "User not found"}, status_code=404)
+            
+            from yookassa import Configuration, Payment as YooPayment
+            from uuid import uuid4
+            
+            Configuration.account_id = settings.YOOKASSA_SHOP_ID
+            Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
+            
+            idempotence_key = str(uuid4())
+            return_url = settings.YOOKASSA_RETURN_URL or f"https://t.me/plus_vpnn_bot"
+            
+            from app.database.models import Transaction, TransactionType, PaymentMethod
+            transaction = Transaction(
+                user_id=user.id,
+                amount=amount_rubles,
+                type=TransactionType.deposit,
+                payment_method=PaymentMethod.yookassa,
+                status="pending",
+                description=f"Пополнение баланса - {amount_rubles}₽"
+            )
+            db.add(transaction)
+            await db.commit()
+            await db.refresh(transaction)
+            
+            payment_data = {
+                "amount": {"value": str(amount_rubles), "currency": "RUB"},
+                "confirmation": {"type": "redirect", "return_url": return_url},
+                "capture": True,
+                "description": f"Пополнение VPN баланса - {amount_rubles}₽",
+                "metadata": {
+                    "user_id": str(user.id),
+                    "telegram_id": str(telegram_id),
+                    "transaction_id": str(transaction.id)
+                },
+                "receipt": {
+                    "customer": {"email": "noreply@vpn.bot"},
+                    "items": [{
+                        "description": "Пополнение баланса VPN бота",
+                        "quantity": "1.00",
+                        "amount": {"value": str(amount_rubles), "currency": "RUB"},
+                        "vat_code": "1",
+                        "payment_mode": "full_payment",
+                        "payment_subject": "service"
+                    }]
+                }
+            }
+            
+            try:
+                payment = YooPayment.create(payment_data, idempotence_key)
+                
+                transaction.external_id = payment.id
+                await db.commit()
+                
+                return {
+                    "payment_url": payment.confirmation.confirmation_url,
+                    "payment_id": payment.id
+                }
+            except Exception as e:
+                logger.error(f"YooKassa payment error: {e}")
+                return JSONResponse({"error": "Payment creation failed"}, status_code=500)
+                
+    except Exception as e:
+        logger.error(f"Miniapp payment error: {e}")
+        return JSONResponse({"error": "Internal error"}, status_code=500)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)

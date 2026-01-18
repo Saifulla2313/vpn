@@ -932,7 +932,7 @@
                                     по скопированному ключу
                                 </p>
                                 <img
-                                    href="/static/miniapp/image.jpg"
+                                    src="/static/miniapp/image.jpg"
                                     alt="Пример вставки ключа"
                                     style="
                                         width: 100%;
@@ -1238,18 +1238,15 @@
                 }
 
                 try {
-                    const response = await fetch(
-                        "/miniapp/payments/create",
-                        {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                init_data: tg?.initData,
-                                amount_kopeks: selectedAmount * 100,
-                                payment_method: "yookassa",
-                            }),
-                        },
-                    );
+                    const response = await fetch("/miniapp/payments/create", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            init_data: tg?.initData,
+                            amount_kopeks: selectedAmount * 100,
+                            payment_method: "yookassa",
+                        }),
+                    });
 
                     if (response.ok) {
                         const data = await response.json();
