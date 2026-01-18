@@ -11,15 +11,8 @@ def get_main_menu_keyboard(webapp_url: Optional[str] = None, user_id: Optional[i
             InlineKeyboardButton(text="📱 ПОДКЛЮЧИТЬСЯ", web_app=WebAppInfo(url=webapp_url))
         ])
     
-    buttons.extend([
-        [
-            InlineKeyboardButton(text="💰 Пополнить баланс", callback_data="deposit"),
-            InlineKeyboardButton(text="📊 Мой профиль", callback_data="profile")
-        ],
-        [
-            InlineKeyboardButton(text="🔐 VPN подписка", callback_data="subscription"),
-            InlineKeyboardButton(text="❓ Помощь", callback_data="help")
-        ]
+    buttons.append([
+        InlineKeyboardButton(text="❓ Не открывается?", callback_data="not_opening_menu")
     ])
     
     if user_id and settings.is_admin(user_id):
@@ -27,6 +20,23 @@ def get_main_menu_keyboard(webapp_url: Optional[str] = None, user_id: Optional[i
             InlineKeyboardButton(text="🛠 Админ панель", callback_data="admin_panel")
         ])
     
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_not_opening_menu_keyboard() -> InlineKeyboardMarkup:
+    buttons = [
+        [
+            InlineKeyboardButton(text="💰 Пополнить баланс", callback_data="deposit"),
+            InlineKeyboardButton(text="📊 Мой профиль", callback_data="profile")
+        ],
+        [
+            InlineKeyboardButton(text="🔐 VPN подписка", callback_data="subscription"),
+            InlineKeyboardButton(text="❓ Помощь", callback_data="help")
+        ],
+        [
+            InlineKeyboardButton(text="◀️ Назад", callback_data="back_to_main")
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 

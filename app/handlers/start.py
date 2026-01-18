@@ -6,7 +6,7 @@ from aiogram.filters import CommandStart, Command
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.crud.user import get_user_by_telegram_id, create_user
-from app.keyboards.inline import get_main_menu_keyboard
+from app.keyboards.inline import get_main_menu_keyboard, get_not_opening_menu_keyboard
 from app.localization.texts import get_text
 from app.config import settings
 
@@ -59,6 +59,29 @@ async def cmd_start(message: Message, db: AsyncSession):
 
 @router.callback_query(F.data == "back_to_menu")
 async def back_to_menu(callback: CallbackQuery):
+    webapp_url = get_webapp_url()
+    
+    await callback.message.edit_text(
+        get_text("welcome"),
+        reply_markup=get_main_menu_keyboard(webapp_url, user_id=callback.from_user.id),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "not_opening_menu")
+async def not_opening_menu(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "📱 <b>Не открывается приложение?</b>\n\n"
+        "Выберите нужный раздел ниже:",
+        reply_markup=get_not_opening_menu_keyboard(),
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "back_to_main")
+async def back_to_main(callback: CallbackQuery):
     webapp_url = get_webapp_url()
     
     await callback.message.edit_text(
