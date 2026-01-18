@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import select, update, func, String
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import User, Subscription, SubscriptionStatus
 
@@ -128,7 +129,7 @@ async def get_users_list(
     order_by_total_spent: bool = False,
     order_by_purchase_count: bool = False
 ) -> List[User]:
-    query = select(User)
+    query = select(User).options(selectinload(User.subscription))
     if is_active is not None:
         query = query.where(User.is_blocked == (not is_active))
     if status is not None:
