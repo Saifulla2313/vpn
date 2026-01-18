@@ -115,6 +115,11 @@ class Settings:
     def is_yookassa_enabled(self) -> bool:
         return bool(self.YOOKASSA_SHOP_ID and self.YOOKASSA_SECRET_KEY)
     
+    @property
+    def REMNAWAVE_API_URL(self) -> str:
+        """Alias for REMNAWAVE_URL for backward compatibility."""
+        return self.REMNAWAVE_URL
+    
     def is_remnawave_enabled(self) -> bool:
         return bool(self.REMNAWAVE_URL and self.REMNAWAVE_API_KEY)
     
@@ -192,7 +197,7 @@ class Settings:
     def get_remnawave_auth_params(self) -> Dict[str, str]:
         """Get RemnaWave authentication parameters."""
         return {
-            "url": self.REMNAWAVE_URL,
+            "base_url": self.REMNAWAVE_URL,
             "api_key": self.REMNAWAVE_API_KEY,
             "secret_key": self.REMNAWAVE_SECRET_KEY or "",
         }
