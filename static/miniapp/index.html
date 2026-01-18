@@ -1080,7 +1080,7 @@
                 }
 
                 try {
-                    const response = await fetch("/api/miniapp/subscription", {
+                    const response = await fetch("/miniapp/subscription", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ init_data: tg.initData }),
@@ -1239,7 +1239,7 @@
 
                 try {
                     const response = await fetch(
-                        "/api/miniapp/payments/create",
+                        "/miniapp/payments/create",
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
