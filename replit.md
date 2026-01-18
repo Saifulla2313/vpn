@@ -86,3 +86,66 @@ All secrets and configuration loaded from environment variables via `app/config.
 - `REMNAWAVE_URL`, `REMNAWAVE_API_KEY`: VPN panel credentials
 - `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`: Payment credentials
 - Various webhook secrets for payment verification
+
+## Admin Panel
+
+The comprehensive admin panel is located in `app/handlers/admin/` with 30+ modules organized into 6 submenus:
+
+### 1. Users Submenu (`admin_submenu_users`)
+- **users.py** - User search, list, management
+- **subscriptions.py** - Subscription management
+- **trials.py** - Trial period management
+- **blacklist.py** - User blacklist
+- **bulk_ban.py** - Mass ban operations
+
+### 2. Promo & Statistics Submenu (`admin_submenu_promo`)
+- **promocodes.py** - Promo code CRUD
+- **statistics.py** - User/revenue stats
+- **promo_groups.py** - Promo group management
+- **promo_offers.py** - Special offers
+- **referrals.py** - Referral system
+- **payments.py** - Payment method management
+
+### 3. Communications Submenu (`admin_submenu_communications`)
+- **messages.py** - Broadcast messaging
+- **welcome_text.py** - Welcome message config
+- **polls.py** - User polls
+- **contests.py** - Contests management
+- **daily_contests.py** - Daily contests
+- **campaigns.py** - Marketing campaigns
+
+### 4. Support Submenu (`admin_submenu_support`)
+- **tickets.py** - Support ticket system
+- **faq.py** - FAQ management
+- **rules.py** - Service rules
+- **support_settings.py** - Support configuration
+
+### 5. Settings Submenu (`admin_submenu_settings`)
+- **bot_configuration.py** - Bot settings
+- **tariffs.py** - Pricing plans
+- **servers.py** - VPN server management
+- **remnawave.py** - VPN panel integration
+- **privacy_policy.py** - Privacy policy
+- **public_offer.py** - Terms of service
+
+### 6. System Submenu (`admin_submenu_system`)
+- **monitoring.py** - System monitoring
+- **backup.py** - Database backups
+- **maintenance.py** - Maintenance mode
+- **system_logs.py** - Log viewer
+- **updates.py** - Version updates
+- **reports.py** - System reports
+
+### Admin Panel Entry
+- Entry point: `app/handlers/admin/main.py`
+- Keyboards: `app/keyboards/admin.py`
+- States: `app/states.py` (AdminStates, TicketStates, etc.)
+
+## Recent Changes (January 2026)
+
+- Integrated comprehensive admin panel with 30+ modules
+- Added 60+ database models for full functionality
+- Added 70+ keyboard builder functions
+- Added all necessary FSM states for admin workflows
+- Added CRUD operations for all new models
+- Added stub services for pending integrations
