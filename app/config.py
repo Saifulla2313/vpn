@@ -1,6 +1,16 @@
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict
 from dataclasses import dataclass, field
+
+
+PERIOD_PRICES: Dict[int, int] = {
+    1: 600,
+    7: 3500,
+    30: 12000,
+    90: 30000,
+    180: 54000,
+    365: 96000,
+}
 
 
 @dataclass
@@ -11,6 +21,9 @@ class Settings:
     
     # Database
     DATABASE_URL: str = field(default_factory=lambda: os.getenv("DATABASE_URL", ""))
+    
+    # Redis
+    REDIS_URL: Optional[str] = field(default_factory=lambda: os.getenv("REDIS_URL"))
     
     # Remnawave
     REMNAWAVE_URL: str = field(default_factory=lambda: os.getenv("REMNAWAVE_URL", ""))
@@ -32,6 +45,7 @@ class Settings:
     DEVICE_LIMIT_ENABLED: bool = field(default_factory=lambda: os.getenv("DEVICE_LIMIT_ENABLED", "false").lower() == "true")
     
     # Web API
+    WEB_API_ENABLED: bool = field(default_factory=lambda: os.getenv("WEB_API_ENABLED", "false").lower() == "true")
     WEB_API_TITLE: str = "VPN Bot Admin API"
     WEB_API_VERSION: str = "1.0.0"
     WEB_API_REQUEST_LOGGING: bool = True
@@ -63,6 +77,27 @@ class Settings:
     # Maintenance
     MAINTENANCE_MODE: bool = False
     
+    # Backup settings
+    BACKUP_LOCATION: str = field(default_factory=lambda: os.getenv("BACKUP_LOCATION", "./data/backups"))
+    BACKUP_AUTO_ENABLED: bool = field(default_factory=lambda: os.getenv("BACKUP_AUTO_ENABLED", "false").lower() == "true")
+    BACKUP_INTERVAL_HOURS: int = field(default_factory=lambda: int(os.getenv("BACKUP_INTERVAL_HOURS", "24")))
+    BACKUP_MAX_KEEP: int = field(default_factory=lambda: int(os.getenv("BACKUP_MAX_KEEP", "7")))
+    
+    # Bot username for return URLs
+    BOT_USERNAME: str = field(default_factory=lambda: os.getenv("BOT_USERNAME", "vpn_bot"))
+    
+    # Logo and branding
+    LOGO_FILE: str = field(default_factory=lambda: os.getenv("LOGO_FILE", "assets/logo.png"))
+    
+    # Default language
+    DEFAULT_LANGUAGE: str = field(default_factory=lambda: os.getenv("DEFAULT_LANGUAGE", "ru"))
+    
+    # Timezone
+    TIMEZONE: str = field(default_factory=lambda: os.getenv("TIMEZONE", "Europe/Moscow"))
+    
+    # Inactive user cleanup
+    INACTIVE_USER_DELETE_MONTHS: int = field(default_factory=lambda: int(os.getenv("INACTIVE_USER_DELETE_MONTHS", "6")))
+    
     def __post_init__(self):
         admin_ids_str = os.getenv("ADMIN_IDS", "")
         if admin_ids_str:
@@ -76,6 +111,57 @@ class Settings:
     
     def is_mulenpay_enabled(self) -> bool:
         return bool(self.MULENPAY_SECRET_KEY)
+    
+    def is_yookassa_enabled(self) -> bool:
+        return bool(self.YOOKASSA_SHOP_ID and self.YOOKASSA_SECRET_KEY)
+    
+    def is_remnawave_enabled(self) -> bool:
+        return bool(self.REMNAWAVE_URL and self.REMNAWAVE_API_KEY)
+    
+    def is_heleket_enabled(self) -> bool:
+        return False
+    
+    def is_pal24_enabled(self) -> bool:
+        return False
+    
+    def is_wata_enabled(self) -> bool:
+        return False
+    
+    def is_platega_enabled(self) -> bool:
+        return False
+    
+    def is_support_topup_enabled(self) -> bool:
+        return False
+    
+    def is_referral_program_enabled(self) -> bool:
+        return False
+    
+    def is_devices_selection_enabled(self) -> bool:
+        return False
+    
+    def is_maintenance_monitoring_enabled(self) -> bool:
+        return False
+    
+    def is_trial_paid_activation_enabled(self) -> bool:
+        return False
+    
+    def is_auto_purchase_after_topup_enabled(self) -> bool:
+        return False
+    
+    def is_payment_verification_auto_check_enabled(self) -> bool:
+        return False
+    
+    def is_admin_notifications_enabled(self) -> bool:
+        return True
+    
+    def is_backup_send_enabled(self) -> bool:
+        return False
+    
+    def is_web_api_enabled(self) -> bool:
+        return bool(self.WEB_API_ENABLED)
+    
+    def get_platega_active_methods(self) -> List[str]:
+        return []
     
     def get_mulenpay_display_name(self) -> str:
         return "MulenPay"
@@ -97,6 +183,51 @@ class Settings:
         if self.WEB_API_ALLOWED_ORIGINS == "*":
             return ["*"]
         return [o.strip() for o in self.WEB_API_ALLOWED_ORIGINS.split(",")]
+    
+    def model_dump(self) -> Dict[str, any]:
+        """Return all settings as a dictionary (Pydantic compatibility)."""
+        from dataclasses import fields
+        return {f.name: getattr(self, f.name) for f in fields(self)}
+    
+    def get_remnawave_auth_params(self) -> Dict[str, str]:
+        """Get RemnaWave authentication parameters."""
+        return {
+            "url": self.REMNAWAVE_URL,
+            "api_key": self.REMNAWAVE_API_KEY,
+            "secret_key": self.REMNAWAVE_SECRET_KEY or "",
+        }
+    
+    def get_period_price(self, period_days: int) -> Optional[int]:
+        """Get price for a subscription period."""
+        return PERIOD_PRICES.get(period_days)
+    
+    def get_traffic_price(self, traffic_gb: int) -> Optional[int]:
+        """Get price for traffic amount."""
+        return TRAFFIC_PRICES.get(traffic_gb)
 
 
 settings = Settings()
+
+
+TRAFFIC_PRICES: Dict[int, int] = {
+    10: 1000,
+    50: 4000,
+    100: 7000,
+    500: 30000,
+}
+
+
+ENV_OVERRIDE_KEYS: List[str] = [
+    "PERIOD_PRICES",
+    "TRAFFIC_PRICES",
+]
+
+
+def refresh_period_prices() -> None:
+    """Refresh period prices from environment or database."""
+    pass
+
+
+def refresh_traffic_prices() -> None:
+    """Refresh traffic prices from environment or database."""
+    pass

@@ -21,10 +21,14 @@ class UserCartService:
     def _setup_redis(self):
         """Инициализация Redis клиента"""
         try:
+            if not settings.REDIS_URL:
+                logger.warning("REDIS_URL не настроен, корзина пользователя будет недоступна")
+                self.redis_client = None
+                return
             self.redis_client = redis.from_url(settings.REDIS_URL)
         except Exception as e:
             logger.error(f"Ошибка подключения к Redis: {e}")
-            raise
+            self.redis_client = None
     
     async def save_user_cart(self, user_id: int, cart_data: Dict[str, Any], ttl: int = 3600) -> bool:
         """
@@ -38,6 +42,8 @@ class UserCartService:
         Returns:
             bool: Успешность сохранения
         """
+        if not self.redis_client:
+            return False
         try:
             key = f"user_cart:{user_id}"
             json_data = json.dumps(cart_data, ensure_ascii=False)
@@ -58,6 +64,8 @@ class UserCartService:
         Returns:
             dict: Данные корзины или None
         """
+        if not self.redis_client:
+            return None
         try:
             key = f"user_cart:{user_id}"
             json_data = await self.redis_client.get(key)
@@ -80,6 +88,8 @@ class UserCartService:
         Returns:
             bool: Успешность удаления
         """
+        if not self.redis_client:
+            return False
         try:
             key = f"user_cart:{user_id}"
             result = await self.redis_client.delete(key)
@@ -100,6 +110,8 @@ class UserCartService:
         Returns:
             bool: Наличие корзины
         """
+        if not self.redis_client:
+            return False
         try:
             key = f"user_cart:{user_id}"
             exists = await self.redis_client.exists(key)

@@ -20,7 +20,7 @@ from app.handlers.admin import main as admin_main
 from app.handlers.admin import (
     monitoring, promocodes, users, subscriptions, tickets, 
     statistics, blacklist, payments, referrals, servers,
-    maintenance, backups, promo_groups, promo_offers,
+    maintenance, backup, promo_groups, promo_offers,
     campaigns, messages, polls, contests, daily_contests,
     welcome_text, faq, rules, privacy_policy, public_offer,
     bot_configuration, tariffs, remnawave, system_logs, 
@@ -80,7 +80,7 @@ async def start_bot():
     referrals.register_handlers(dp)
     servers.register_handlers(dp)
     maintenance.register_handlers(dp)
-    backups.register_handlers(dp)
+    backup.register_handlers(dp)
     promo_groups.register_handlers(dp)
     promo_offers.register_handlers(dp)
     campaigns.register_handlers(dp)

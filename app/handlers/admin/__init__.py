@@ -29,6 +29,7 @@ from . import (
     subscriptions,
     support_settings,
     system_logs,
+    tariffs,
     tickets,
     trials,
     updates,

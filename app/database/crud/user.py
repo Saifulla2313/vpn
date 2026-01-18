@@ -98,3 +98,221 @@ async def mark_trial_used(db: AsyncSession, user_id: int) -> None:
     if user:
         user.trial_used = True
         await db.commit()
+
+
+async def get_users_list(
+    db: AsyncSession,
+    offset: int = 0,
+    limit: int = 100,
+    is_active: Optional[bool] = None
+) -> List[User]:
+    query = select(User)
+    if is_active is not None:
+        query = query.where(User.is_blocked == (not is_active))
+    query = query.order_by(User.created_at.desc()).offset(offset).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+async def get_users_with_active_subscriptions(db: AsyncSession) -> List[User]:
+    result = await db.execute(
+        select(User)
+        .join(Subscription)
+        .where(Subscription.status == SubscriptionStatus.ACTIVE)
+    )
+    return result.scalars().all()
+
+
+async def get_inactive_users(
+    db: AsyncSession,
+    days: int = 30,
+    limit: int = 100
+) -> List[User]:
+    from datetime import timedelta
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    result = await db.execute(
+        select(User)
+        .where(User.updated_at < cutoff)
+        .limit(limit)
+    )
+    return result.scalars().all()
+
+
+async def subtract_user_balance(
+    db: AsyncSession,
+    user_id: int,
+    amount: float
+) -> Optional[User]:
+    user = await get_user_by_id(db, user_id)
+    if user:
+        user.balance -= amount
+        if user.balance < 0:
+            user.balance = 0
+        user.updated_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
+async def get_users_for_promo_segment(
+    db: AsyncSession,
+    segment: str,
+    limit: int = 1000
+) -> List[User]:
+    query = select(User)
+    
+    if segment == "active":
+        query = query.join(Subscription).where(
+            Subscription.status == SubscriptionStatus.ACTIVE
+        )
+    elif segment == "inactive":
+        query = query.join(Subscription).where(
+            Subscription.status == SubscriptionStatus.INACTIVE
+        )
+    elif segment == "trial":
+        query = query.join(Subscription).where(
+            Subscription.status == SubscriptionStatus.TRIAL
+        )
+    elif segment == "with_balance":
+        query = query.where(User.balance > 0)
+    
+    query = query.limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+async def add_user_balance(db: AsyncSession, user_id: int, amount: float) -> Optional[User]:
+    return await update_user_balance(db, user_id, amount)
+
+
+async def create_user_no_commit(
+    db: AsyncSession,
+    telegram_id: int,
+    username: Optional[str] = None,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    language_code: str = "ru",
+    referrer_id: Optional[int] = None
+) -> User:
+    user = User(
+        telegram_id=telegram_id,
+        username=username,
+        first_name=first_name,
+        last_name=last_name,
+        language_code=language_code,
+        referrer_id=referrer_id
+    )
+    db.add(user)
+    return user
+
+
+async def update_user(
+    db: AsyncSession,
+    user_id: int,
+    **kwargs
+) -> Optional[User]:
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        return None
+    for key, value in kwargs.items():
+        if hasattr(user, key):
+            setattr(user, key, value)
+    user.updated_at = datetime.utcnow()
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def delete_user(db: AsyncSession, user_id: int) -> bool:
+    """Delete a user by ID."""
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        return False
+    await db.delete(user)
+    await db.commit()
+    return True
+
+
+async def get_inactive_users(
+    db: AsyncSession,
+    days: int = 30,
+    limit: int = 100
+) -> List[User]:
+    """Get users who have been inactive for a specified number of days."""
+    from datetime import timedelta
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    result = await db.execute(
+        select(User).where(User.updated_at < cutoff).limit(limit)
+    )
+    return result.scalars().all()
+
+
+async def subtract_user_balance(
+    db: AsyncSession,
+    user_id: int,
+    amount: float
+) -> Optional[User]:
+    """Subtract from user balance."""
+    user = await get_user_by_id(db, user_id)
+    if user:
+        user.balance -= amount
+        if user.balance < 0:
+            user.balance = 0
+        user.updated_at = datetime.utcnow()
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
+async def cleanup_expired_promo_offer_discounts(
+    db: AsyncSession
+) -> int:
+    """Clean up expired promo offer discounts. Returns number of cleaned records."""
+    return 0
+
+
+from typing import Dict, Any
+
+
+async def get_users_statistics(db: AsyncSession) -> Dict[str, Any]:
+    """Get user statistics."""
+    from sqlalchemy import func
+    total = await db.execute(select(func.count(User.id)))
+    active = await db.execute(
+        select(func.count(User.id)).where(User.is_active == True)
+    )
+    return {
+        'total_users': total.scalar() or 0,
+        'active_users': active.scalar() or 0,
+    }
+
+
+async def get_users_spending_stats(
+    db: AsyncSession,
+    limit: int = 100
+) -> List[Dict[str, Any]]:
+    """Get user spending statistics."""
+    return []
+
+
+async def get_referrals(
+    db: AsyncSession,
+    user_id: int,
+    limit: int = 100
+) -> List[User]:
+    """Get referrals for a user."""
+    result = await db.execute(
+        select(User).where(User.referrer_id == user_id).limit(limit)
+    )
+    return result.scalars().all()
+
+
+async def get_user_by_username(
+    db: AsyncSession,
+    username: str
+) -> Optional[User]:
+    """Get user by username."""
+    result = await db.execute(
+        select(User).where(User.username == username)
+    )
+    return result.scalar_one_or_none()

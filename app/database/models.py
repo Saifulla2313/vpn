@@ -49,6 +49,21 @@ class WithdrawalRequestStatus(str, PyEnum):
     CANCELLED = "cancelled"
 
 
+class PaymentMethodType(str, PyEnum):
+    YOOKASSA = "yookassa"
+    MULENPAY = "mulenpay"
+    CRYPTOBOT = "cryptobot"
+    PAL24 = "pal24"
+    WATA = "wata"
+    HELEKET = "heleket"
+    PLATEGA = "platega"
+    SUPPORT = "support"
+    BALANCE = "balance"
+
+
+PaymentMethod = PaymentMethodType
+
+
 class UserStatus(str, PyEnum):
     ACTIVE = "active"
     BLOCKED = "blocked"
@@ -437,6 +452,52 @@ class Pal24Payment(Base):
     paid_at = Column(DateTime, nullable=True)
 
 
+class WataPayment(Base):
+    __tablename__ = "wata_payments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    payment_id = Column(String(100), unique=True, nullable=False)
+    amount_kopeks = Column(Integer, nullable=False)
+    currency = Column(String(10), default="RUB")
+    status = Column(String(50), default="pending")
+    description = Column(Text, nullable=True)
+    payment_url = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime, nullable=True)
+
+
+class HeleketPayment(Base):
+    __tablename__ = "heleket_payments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    payment_id = Column(String(100), unique=True, nullable=False)
+    amount_kopeks = Column(Integer, nullable=False)
+    currency = Column(String(10), default="RUB")
+    status = Column(String(50), default="pending")
+    description = Column(Text, nullable=True)
+    payment_url = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime, nullable=True)
+
+
+class PlategaPayment(Base):
+    __tablename__ = "platega_payments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    payment_id = Column(String(100), unique=True, nullable=False)
+    amount_kopeks = Column(Integer, nullable=False)
+    currency = Column(String(10), default="RUB")
+    status = Column(String(50), default="pending")
+    description = Column(Text, nullable=True)
+    payment_url = Column(Text, nullable=True)
+    method = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime, nullable=True)
+
+
 class WelcomeText(Base):
     __tablename__ = "welcome_texts"
     
@@ -696,7 +757,7 @@ class SubscriptionEvent(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-class PaymentMethod(Base):
+class PaymentMethodConfig(Base):
     __tablename__ = "payment_methods"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -709,5 +770,110 @@ class PaymentMethod(Base):
     commission_percent = Column(Float, default=0.0)
     sort_order = Column(Integer, default=0)
     settings = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SubscriptionTemporaryAccess(Base):
+    __tablename__ = "subscription_temporary_access"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"), nullable=True)
+    offer_id = Column(Integer, ForeignKey("discount_offers.id"), nullable=True)
+    squad_uuid = Column(String(100), nullable=True)
+    is_active = Column(Boolean, default=True)
+    expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    subscription = relationship("Subscription", backref="temporary_accesses")
+    offer = relationship("DiscountOffer", backref="temporary_accesses")
+
+
+class FaqPage(Base):
+    __tablename__ = "faq_pages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    language = Column(String(10), default="ru")
+    title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=True)
+    sort_order = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class FaqSetting(Base):
+    __tablename__ = "faq_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    language = Column(String(10), unique=True, nullable=False)
+    is_enabled = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class UserPromoGroup(Base):
+    __tablename__ = "user_promo_groups"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    group_name = Column(String(100), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", backref="promo_groups")
+
+
+class PrivacyPolicy(Base):
+    __tablename__ = "privacy_policies"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    language = Column(String(10), default="ru")
+    content = Column(Text, nullable=True)
+    is_enabled = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PromoOfferTemplate(Base):
+    __tablename__ = "promo_offer_templates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    offer_type = Column(String(50), default="discount")
+    discount_percent = Column(Float, default=0.0)
+    discount_amount_kopeks = Column(Integer, default=0)
+    duration_hours = Column(Integer, default=24)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PromoOfferLog(Base):
+    __tablename__ = "promo_offer_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    template_id = Column(Integer, ForeignKey("promo_offer_templates.id"), nullable=True)
+    offer_type = Column(String(50), nullable=True)
+    action = Column(String(50), nullable=True)
+    status = Column(String(50), default="sent")
+    details = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", backref="promo_logs")
+    template = relationship("PromoOfferTemplate", backref="logs")
+
+
+class PublicOffer(Base):
+    __tablename__ = "public_offers"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    language = Column(String(10), default="ru")
+    content = Column(Text, nullable=True)
+    is_enabled = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

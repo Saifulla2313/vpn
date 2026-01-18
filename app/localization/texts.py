@@ -134,3 +134,12 @@ def get_text(key: str, language: str = "ru", **kwargs) -> str:
         except KeyError:
             pass
     return text
+
+
+_rules_cache: Dict[str, Any] = {}
+
+
+def clear_rules_cache() -> None:
+    """Clear the rules cache."""
+    global _rules_cache
+    _rules_cache = {}

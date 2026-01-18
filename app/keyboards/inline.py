@@ -116,3 +116,69 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_happ_download_button_row(
+    platform: str = "android"
+) -> list:
+    """Get download button row for HApp."""
+    if platform == "android":
+        return [InlineKeyboardButton(text="📱 Скачать приложение (Android)", url="https://play.google.com/store")]
+    elif platform == "ios":
+        return [InlineKeyboardButton(text="📱 Скачать приложение (iOS)", url="https://apps.apple.com/")]
+    return []
+
+
+def get_offer_keyboard(offer_id: int) -> InlineKeyboardMarkup:
+    """Get keyboard for promo offer."""
+    buttons = [
+        [InlineKeyboardButton(text="✅ Принять предложение", callback_data=f"accept_offer_{offer_id}")],
+        [InlineKeyboardButton(text="❌ Отклонить", callback_data=f"decline_offer_{offer_id}")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_admin_tickets_keyboard(
+    tickets: list,
+    page: int = 1,
+    total_pages: int = 1
+) -> InlineKeyboardMarkup:
+    """Get keyboard for admin ticket list."""
+    buttons = []
+    for ticket in tickets:
+        ticket_id = ticket.id if hasattr(ticket, 'id') else ticket.get('id', 0)
+        status = ticket.status if hasattr(ticket, 'status') else ticket.get('status', '')
+        buttons.append([InlineKeyboardButton(
+            text=f"🎫 #{ticket_id} - {status}",
+            callback_data=f"admin_view_ticket_{ticket_id}"
+        )])
+    
+    if total_pages > 1:
+        nav_row = []
+        if page > 1:
+            nav_row.append(InlineKeyboardButton(text="◀️", callback_data=f"admin_tickets_page_{page-1}"))
+        nav_row.append(InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="noop"))
+        if page < total_pages:
+            nav_row.append(InlineKeyboardButton(text="▶️", callback_data=f"admin_tickets_page_{page+1}"))
+        buttons.append(nav_row)
+    
+    buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_panel")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_admin_ticket_view_keyboard(ticket_id: int) -> InlineKeyboardMarkup:
+    """Get keyboard for viewing a single ticket."""
+    buttons = [
+        [InlineKeyboardButton(text="💬 Ответить", callback_data=f"admin_reply_ticket_{ticket_id}")],
+        [InlineKeyboardButton(text="✅ Закрыть", callback_data=f"admin_close_ticket_{ticket_id}")],
+        [InlineKeyboardButton(text="⬅️ К списку", callback_data="admin_tickets")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_admin_ticket_reply_cancel_keyboard(ticket_id: int) -> InlineKeyboardMarkup:
+    """Get keyboard for canceling ticket reply."""
+    buttons = [
+        [InlineKeyboardButton(text="❌ Отмена", callback_data=f"admin_view_ticket_{ticket_id}")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
