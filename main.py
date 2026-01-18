@@ -616,6 +616,8 @@ async def miniapp_subscription(request: Request):
             bot_username = "plus_vpnn_bot"
             referral_link = f"https://t.me/{bot_username}?start=ref{user.id}"
             
+            daily_price = settings.SUBSCRIPTION_DAILY_PRICE
+            
             return {
                 "user": {
                     "id": user.id,
@@ -631,6 +633,7 @@ async def miniapp_subscription(request: Request):
                 "referral_link": referral_link,
                 "referral_count": getattr(user, 'referral_count', 0) or 0,
                 "referral_earned": getattr(user, 'referral_earned', 0) or 0,
+                "daily_price": daily_price,
             }
     except Exception as e:
         logger.error(f"Miniapp subscription error: {e}")

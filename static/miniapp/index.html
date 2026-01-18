@@ -771,7 +771,7 @@
 
         <div class="container">
             <header class="header">
-                <img src="/static/miniapp/logo.png" alt="V+ VPN" class="logo-img" style="max-width: 180px; height: auto;">
+                <img src="/static/miniapp/logo.png" alt="V+ VPN" style="max-width: 260px; height: auto;">
             </header>
 
             <section class="balance-card" id="balance-section">
@@ -781,7 +781,7 @@
                         <span class="balance-currency">₽</span>
                     </div>
                     <div class="tariff-text" id="tariff-text">
-                        Тариф 5₽/день за устройство
+                        Загрузка тарифа...
                     </div>
                     <a class="topup-link" id="topup-link">Пополнить баланс</a>
                 </div>
@@ -1109,6 +1109,13 @@
                 const devicesEl = document.getElementById("devices-count");
                 if (userData.devices?.length !== undefined) {
                     devicesEl.textContent = userData.devices.length;
+                }
+
+                const tariffEl = document.getElementById("tariff-text");
+                if (userData.daily_price !== undefined) {
+                    tariffEl.textContent = `Тариф ${userData.daily_price}₽/день за устройство`;
+                } else {
+                    tariffEl.textContent = "Тариф 6₽/день за устройство";
                 }
 
                 if (userData.referral_link) {
