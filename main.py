@@ -608,7 +608,30 @@ async def miniapp_subscription(request: Request):
                         devices_info = await api.get_user_devices(user.remnawave_uuid)
                         if devices_info:
                             devices_list = devices_info.get('devices', [])
-                            devices = [{"name": d.get("name", d.get("userAgent", "Device")[:20] if d.get("userAgent") else "Device"), "hwid": d.get("hwid")} for d in devices_list]
+                            for d in devices_list:
+                                user_agent = d.get("userAgent", d.get("user_agent", ""))
+                                platform = "Неизвестно"
+                                if user_agent:
+                                    ua_lower = user_agent.lower()
+                                    if "android" in ua_lower:
+                                        platform = "Android"
+                                    elif "iphone" in ua_lower or "ipad" in ua_lower or "ios" in ua_lower:
+                                        platform = "iOS"
+                                    elif "windows" in ua_lower:
+                                        platform = "Windows"
+                                    elif "mac" in ua_lower:
+                                        platform = "macOS"
+                                    elif "linux" in ua_lower:
+                                        platform = "Linux"
+                                
+                                devices.append({
+                                    "hwid": d.get("hwid", ""),
+                                    "platform": platform,
+                                    "user_agent": user_agent[:50] if user_agent else "",
+                                    "last_seen": d.get("lastSeenAt", d.get("last_seen", "")),
+                                    "ip": d.get("ip", ""),
+                                    "inbound": d.get("inboundTag", d.get("inbound", ""))
+                                })
                 except Exception as e:
                     logger.warning(f"Failed to fetch RemnaWave data: {e}")
             
