@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models import User, Subscription, SubscriptionStatus
 
@@ -88,9 +88,24 @@ async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> Li
     return result.scalars().all()
 
 
-async def get_users_count(db: AsyncSession) -> int:
-    result = await db.execute(select(User))
-    return len(result.scalars().all())
+async def get_users_count(
+    db: AsyncSession,
+    status: Optional[str] = None,
+    search: Optional[str] = None
+) -> int:
+    query = select(func.count(User.id))
+    if status is not None:
+        query = query.where(User.status == status)
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            (User.username.ilike(search_pattern)) |
+            (User.first_name.ilike(search_pattern)) |
+            (User.last_name.ilike(search_pattern)) |
+            (User.telegram_id.cast(String).ilike(search_pattern))
+        )
+    result = await db.execute(query)
+    return result.scalar() or 0
 
 
 async def mark_trial_used(db: AsyncSession, user_id: int) -> None:
@@ -106,18 +121,36 @@ async def get_users_list(
     limit: int = 100,
     is_active: Optional[bool] = None,
     status: Optional[str] = None,
+    search: Optional[str] = None,
     order_by_balance: bool = False,
-    order_by_traffic: bool = False
+    order_by_traffic: bool = False,
+    order_by_last_activity: bool = False,
+    order_by_total_spent: bool = False,
+    order_by_purchase_count: bool = False
 ) -> List[User]:
     query = select(User)
     if is_active is not None:
         query = query.where(User.is_blocked == (not is_active))
     if status is not None:
         query = query.where(User.status == status)
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            (User.username.ilike(search_pattern)) |
+            (User.first_name.ilike(search_pattern)) |
+            (User.last_name.ilike(search_pattern)) |
+            (User.telegram_id.cast(String).ilike(search_pattern))
+        )
     if order_by_balance:
         query = query.order_by(User.balance.desc())
     elif order_by_traffic:
         query = query.order_by(User.total_traffic.desc())
+    elif order_by_last_activity:
+        query = query.order_by(User.last_activity.desc().nullslast())
+    elif order_by_total_spent:
+        query = query.order_by(User.total_spent.desc())
+    elif order_by_purchase_count:
+        query = query.order_by(User.purchase_count.desc())
     else:
         query = query.order_by(User.created_at.desc())
     query = query.offset(offset).limit(limit)
