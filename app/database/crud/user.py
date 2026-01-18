@@ -105,14 +105,19 @@ async def get_users_list(
     offset: int = 0,
     limit: int = 100,
     is_active: Optional[bool] = None,
-    status: Optional[str] = None
+    status: Optional[str] = None,
+    order_by_balance: bool = False
 ) -> List[User]:
     query = select(User)
     if is_active is not None:
         query = query.where(User.is_blocked == (not is_active))
     if status is not None:
         query = query.where(User.status == status)
-    query = query.order_by(User.created_at.desc()).offset(offset).limit(limit)
+    if order_by_balance:
+        query = query.order_by(User.balance.desc())
+    else:
+        query = query.order_by(User.created_at.desc())
+    query = query.offset(offset).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
 
