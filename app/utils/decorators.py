@@ -28,9 +28,9 @@ def admin_required(func: Callable) -> Callable:
             
             try:
                 if isinstance(event, types.Message):
-                    await event.answer(texts.ACCESS_DENIED)
+                    await event.answer(texts.get("access_denied", "Доступ запрещён"))
                 elif isinstance(event, types.CallbackQuery):
-                    await event.answer(texts.ACCESS_DENIED, show_alert=True)
+                    await event.answer(texts.get("access_denied", "Доступ запрещён"), show_alert=True)
             except TelegramBadRequest as e:
                 if "query is too old" in str(e).lower():
                     logger.warning(f"Попытка ответить на устаревший callback query от {user.id if user else 'Unknown'}")
@@ -39,6 +39,22 @@ def admin_required(func: Callable) -> Callable:
             
             logger.warning(f"Попытка доступа к админской функции от {user.id if user else 'Unknown'}")
             return
+        
+        db = kwargs.get('db')
+        if db and 'db_user' not in kwargs:
+            from app.database.crud.user import get_user_by_telegram_id
+            db_user = await get_user_by_telegram_id(db, user.id)
+            if not db_user:
+                from app.database.crud.user import create_user
+                db_user = await create_user(
+                    db,
+                    telegram_id=user.id,
+                    username=user.username,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    language_code=user.language_code or "ru"
+                )
+            kwargs['db_user'] = db_user
         
         return await func(event, *args, **kwargs)
     
