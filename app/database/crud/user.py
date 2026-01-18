@@ -277,13 +277,37 @@ from typing import Dict, Any
 async def get_users_statistics(db: AsyncSession) -> Dict[str, Any]:
     """Get user statistics."""
     from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = now - timedelta(days=7)
+    month_ago = now - timedelta(days=30)
+    
     total = await db.execute(select(func.count(User.id)))
     active = await db.execute(
         select(func.count(User.id)).where(User.is_active == True)
     )
+    blocked = await db.execute(
+        select(func.count(User.id)).where(User.status == 'blocked')
+    )
+    new_today = await db.execute(
+        select(func.count(User.id)).where(User.created_at >= today_start)
+    )
+    new_week = await db.execute(
+        select(func.count(User.id)).where(User.created_at >= week_ago)
+    )
+    new_month = await db.execute(
+        select(func.count(User.id)).where(User.created_at >= month_ago)
+    )
+    
     return {
         'total_users': total.scalar() or 0,
         'active_users': active.scalar() or 0,
+        'blocked_users': blocked.scalar() or 0,
+        'new_today': new_today.scalar() or 0,
+        'new_week': new_week.scalar() or 0,
+        'new_month': new_month.scalar() or 0,
     }
 
 
