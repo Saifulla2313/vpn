@@ -2,7 +2,7 @@
 Обработчики админ-панели для управления черным списком
 """
 import logging
-from aiogram import types
+from aiogram import types, Dispatcher
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -369,3 +369,7 @@ def register_blacklist_handlers(dp):
         process_blacklist_url,
         StateFilter(BlacklistStates.waiting_for_blacklist_url)
     )
+
+
+def register_handlers(dp: Dispatcher):
+    register_blacklist_handlers(dp)

@@ -50,61 +50,64 @@ class DatabaseMiddleware:
 async def start_bot():
     global bot, dp
     
-    if not settings.BOT_TOKEN:
-        logger.error("BOT_TOKEN is not set!")
-        return
-    
-    bot = Bot(
-        token=settings.BOT_TOKEN,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-    )
-    
-    dp = Dispatcher(storage=MemoryStorage())
-    
-    DatabaseMiddleware(dp)
-    
-    dp.include_router(start.router)
-    dp.include_router(profile.router)
-    dp.include_router(subscription.router)
-    dp.include_router(payment.router)
-    
-    admin_main.register_handlers(dp)
-    monitoring.register_handlers(dp)
-    promocodes.register_handlers(dp)
-    users.register_handlers(dp)
-    subscriptions.register_handlers(dp)
-    tickets.register_handlers(dp)
-    statistics.register_handlers(dp)
-    blacklist.register_handlers(dp)
-    payments.register_handlers(dp)
-    referrals.register_handlers(dp)
-    servers.register_handlers(dp)
-    maintenance.register_handlers(dp)
-    backup.register_handlers(dp)
-    promo_groups.register_handlers(dp)
-    promo_offers.register_handlers(dp)
-    campaigns.register_handlers(dp)
-    messages.register_handlers(dp)
-    polls.register_handlers(dp)
-    contests.register_handlers(dp)
-    daily_contests.register_handlers(dp)
-    welcome_text.register_handlers(dp)
-    faq.register_handlers(dp)
-    rules.register_handlers(dp)
-    privacy_policy.register_handlers(dp)
-    public_offer.register_handlers(dp)
-    bot_configuration.register_handlers(dp)
-    tariffs.register_handlers(dp)
-    remnawave.register_handlers(dp)
-    system_logs.register_handlers(dp)
-    updates.register_handlers(dp)
-    reports.register_handlers(dp)
-    bulk_ban.register_handlers(dp)
-    trials.register_handlers(dp)
-    user_messages.register_handlers(dp)
-    
-    logger.info("Bot started polling...")
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    try:
+        if not settings.BOT_TOKEN:
+            logger.error("BOT_TOKEN is not set!")
+            return
+        
+        bot = Bot(
+            token=settings.BOT_TOKEN,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+        )
+        
+        dp = Dispatcher(storage=MemoryStorage())
+        
+        DatabaseMiddleware(dp)
+        
+        dp.include_router(start.router)
+        dp.include_router(profile.router)
+        dp.include_router(subscription.router)
+        dp.include_router(payment.router)
+        
+        admin_main.register_handlers(dp)
+        monitoring.register_handlers(dp)
+        promocodes.register_handlers(dp)
+        users.register_handlers(dp)
+        subscriptions.register_handlers(dp)
+        tickets.register_handlers(dp)
+        statistics.register_handlers(dp)
+        blacklist.register_handlers(dp)
+        payments.register_handlers(dp)
+        referrals.register_handlers(dp)
+        servers.register_handlers(dp)
+        maintenance.register_handlers(dp)
+        backup.register_handlers(dp)
+        promo_groups.register_handlers(dp)
+        promo_offers.register_handlers(dp)
+        campaigns.register_handlers(dp)
+        messages.register_handlers(dp)
+        polls.register_handlers(dp)
+        contests.register_handlers(dp)
+        daily_contests.register_handlers(dp)
+        welcome_text.register_handlers(dp)
+        faq.register_handlers(dp)
+        rules.register_handlers(dp)
+        privacy_policy.register_handlers(dp)
+        public_offer.register_handlers(dp)
+        bot_configuration.register_handlers(dp)
+        tariffs.register_handlers(dp)
+        remnawave.register_handlers(dp)
+        system_logs.register_handlers(dp)
+        updates.register_handlers(dp)
+        reports.register_handlers(dp)
+        bulk_ban.register_handlers(dp)
+        trials.register_handlers(dp)
+        user_messages.register_handlers(dp)
+        
+        logger.info("Bot started polling...")
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    except Exception as e:
+        logger.error(f"Bot polling error: {e}", exc_info=True)
 
 
 async def stop_bot():

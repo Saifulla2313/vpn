@@ -2,7 +2,7 @@
 Обработчики команд для массовой блокировки пользователей
 """
 import logging
-from aiogram import types
+from aiogram import types, Dispatcher
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
@@ -176,3 +176,7 @@ def register_bulk_ban_handlers(dp):
         process_bulk_ban_list,
         AdminStates.waiting_for_bulk_ban_list
     )
+
+
+def register_handlers(dp: Dispatcher):
+    register_bulk_ban_handlers(dp)

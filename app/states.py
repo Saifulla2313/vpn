@@ -138,25 +138,32 @@ class TicketStates(StatesGroup):
 class RemnaWaveSyncStates(StatesGroup):
     waiting_for_confirmation = State()
     syncing = State()
+    waiting_for_schedule = State()
 
 
 class SquadRenameStates(StatesGroup):
     waiting_for_name = State()
+    waiting_for_new_name = State()
 
 
 class SquadCreateStates(StatesGroup):
     waiting_for_name = State()
     waiting_for_description = State()
     waiting_for_servers = State()
+    selecting_inbounds = State()
 
 
 class SquadMigrationStates(StatesGroup):
     waiting_for_source = State()
     waiting_for_target = State()
     waiting_for_confirmation = State()
+    selecting_source = State()
+    selecting_target = State()
+    confirming = State()
 
 
 class AdminTicketStates(StatesGroup):
     waiting_for_reply = State()
     waiting_for_close_reason = State()
     viewing_ticket = State()
+    waiting_for_block_duration = State()

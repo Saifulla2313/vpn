@@ -439,3 +439,7 @@ def register_welcome_text_handlers(dp: Dispatcher):
         process_welcome_text_edit,
         AdminStates.editing_welcome_text
     )
+
+
+def register_handlers(dp: Dispatcher):
+    register_welcome_text_handlers(dp)
