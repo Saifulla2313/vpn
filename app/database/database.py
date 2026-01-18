@@ -19,7 +19,15 @@ def prepare_database_url(url: str) -> str:
 
 DATABASE_URL = prepare_database_url(settings.DATABASE_URL)
 
-engine = create_async_engine(DATABASE_URL, echo=False)
+engine = create_async_engine(
+    DATABASE_URL, 
+    echo=False,
+    pool_size=20,
+    max_overflow=30,
+    pool_timeout=60,
+    pool_recycle=1800,
+    pool_pre_ping=True
+)
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 Base = declarative_base()
 
