@@ -1111,6 +1111,20 @@
                     devicesEl.textContent = userData.devices.length;
                 }
 
+                const devicesList = document.getElementById("devices-list");
+                if (userData.devices && userData.devices.length > 0) {
+                    devicesList.innerHTML = userData.devices.map(device => `
+                        <div class="device-item">
+                            <div class="device-info">
+                                <span class="device-name">${device.name || 'Устройство'}</span>
+                                <span class="device-id">${device.hwid ? device.hwid.substring(0, 8) + '...' : ''}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    devicesList.innerHTML = '<div class="empty-state"><p>У вас пока нет подключенных устройств</p></div>';
+                }
+
                 const tariffEl = document.getElementById("tariff-text");
                 if (userData.daily_price !== undefined) {
                     tariffEl.textContent = `Тариф ${userData.daily_price}₽/день за устройство`;
