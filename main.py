@@ -640,6 +640,11 @@ async def miniapp_subscription(request: Request):
             bot_username = "plus_vpnn_bot"
             referral_link = f"https://t.me/{bot_username}?start=ref{user.id}"
             
+            from app.database.crud.referral import get_user_referral_stats
+            referral_stats = await get_user_referral_stats(db, user.id)
+            referral_count = referral_stats.get('total_referrals', 0)
+            referral_earned = referral_stats.get('total_earnings_kopeks', 0) // 100
+            
             daily_price = settings.SUBSCRIPTION_DAILY_PRICE
             
             return {
@@ -655,8 +660,8 @@ async def miniapp_subscription(request: Request):
                 "subscription_key": subscription_key,
                 "devices": devices,
                 "referral_link": referral_link,
-                "referral_count": getattr(user, 'referral_count', 0) or 0,
-                "referral_earned": getattr(user, 'referral_earned', 0) or 0,
+                "referral_count": referral_count,
+                "referral_earned": referral_earned,
                 "daily_price": daily_price,
             }
     except Exception as e:
