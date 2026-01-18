@@ -1,5 +1,35 @@
 from typing import Dict, Any
 
+
+class TextsWrapper:
+    """Wrapper for texts dictionary with attribute access and t() method."""
+    
+    def __init__(self, texts_dict: Dict[str, Any]):
+        self._texts = texts_dict
+    
+    def __getattr__(self, name: str) -> str:
+        if name.startswith('_'):
+            raise AttributeError(name)
+        return self._texts.get(name.lower(), name)
+    
+    def __getitem__(self, key: str) -> str:
+        return self._texts.get(key, key)
+    
+    def get(self, key: str, default: str = "") -> str:
+        return self._texts.get(key, default)
+    
+    def t(self, key: str, default: str = "") -> str:
+        """Get text by key with a default fallback."""
+        return self._texts.get(key.lower(), default)
+    
+    # Admin panel text
+    ADMIN_PANEL = """
+🔧 <b>Панель администратора</b>
+
+Выберите раздел для управления:
+"""
+
+
 TEXTS = {
     "ru": {
         "welcome": """
@@ -121,8 +151,9 @@ TEXTS = {
 }
 
 
-def get_texts(language: str = "ru") -> Dict[str, Any]:
-    return TEXTS.get(language, TEXTS["ru"])
+def get_texts(language: str = "ru") -> TextsWrapper:
+    texts_dict = TEXTS.get(language, TEXTS["ru"])
+    return TextsWrapper(texts_dict)
 
 
 def get_text(key: str, language: str = "ru", **kwargs) -> str:
