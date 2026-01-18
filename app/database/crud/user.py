@@ -106,7 +106,8 @@ async def get_users_list(
     limit: int = 100,
     is_active: Optional[bool] = None,
     status: Optional[str] = None,
-    order_by_balance: bool = False
+    order_by_balance: bool = False,
+    order_by_traffic: bool = False
 ) -> List[User]:
     query = select(User)
     if is_active is not None:
@@ -115,6 +116,8 @@ async def get_users_list(
         query = query.where(User.status == status)
     if order_by_balance:
         query = query.order_by(User.balance.desc())
+    elif order_by_traffic:
+        query = query.order_by(User.total_traffic.desc())
     else:
         query = query.order_by(User.created_at.desc())
     query = query.offset(offset).limit(limit)
