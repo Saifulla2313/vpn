@@ -1,2167 +1,1132 @@
 <!doctype html>
 <html lang="ru">
-    <head>
-        <meta charset="UTF-8" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-        />
-        <title>VPN Keeper</title>
-        <script src="https://telegram.org/js/telegram-web-app.js"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap"
-            rel="stylesheet"
-        />
-        <style>
-            :root {
-                --tg-theme-bg-color: #0f0f0f;
-                --tg-theme-text-color: #ffffff;
-                --tg-theme-hint-color: #8b8b8b;
-                --tg-theme-link-color: #a3e635;
-                --tg-theme-button-color: #a3e635;
-                --tg-theme-button-text-color: #000000;
-                --tg-theme-secondary-bg-color: #1a1a1a;
-
-                --accent: #a3e635;
-                --accent-glow: rgba(163, 230, 53, 0.35);
-                --accent-dim: rgba(163, 230, 53, 0.12);
-                --danger: #ff4757;
-                --warning: #ffa502;
-                --success: #a3e635;
-                --card-bg: rgba(26, 26, 26, 0.8);
-                --card-border: rgba(255, 255, 255, 0.06);
-                --glass: rgba(255, 255, 255, 0.03);
-            }
-
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family:
-                    "Outfit",
-                    -apple-system,
-                    BlinkMacSystemFont,
-                    sans-serif;
-                background: var(--tg-theme-bg-color, #0f0f0f);
-                color: var(--tg-theme-text-color, #ffffff);
-                min-height: 100vh;
-                overflow-x: hidden;
-                -webkit-font-smoothing: antialiased;
-            }
-
-            /* Animated background */
-            .bg-pattern {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                z-index: -1;
-                background:
-                    radial-gradient(
-                        ellipse 80% 50% at 50% -20%,
-                        var(--accent-dim),
-                        transparent
-                    ),
-                    radial-gradient(
-                        ellipse 60% 40% at 100% 100%,
-                        rgba(0, 100, 200, 0.08),
-                        transparent
-                    ),
-                    linear-gradient(
-                        180deg,
-                        #0a0a0a 0%,
-                        #0f0f0f 50%,
-                        #0a0a0a 100%
-                    );
-            }
-
-            .bg-grid {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                z-index: -1;
-                background-image:
-                    linear-gradient(
-                        rgba(255, 255, 255, 0.02) 1px,
-                        transparent 1px
-                    ),
-                    linear-gradient(
-                        90deg,
-                        rgba(255, 255, 255, 0.02) 1px,
-                        transparent 1px
-                    );
-                background-size: 50px 50px;
-                mask-image: radial-gradient(
-                    ellipse 100% 100% at 50% 0%,
-                    black,
-                    transparent 70%
-                );
-            }
-
-            .container {
-                max-width: 440px;
-                margin: 0 auto;
-                padding: 16px;
-                padding-bottom: 100px;
-            }
-
-            /* Header */
-            .header {
-                text-align: center;
-                padding: 24px 0 32px;
-                animation: fadeInDown 0.6s ease;
-            }
-
-            .logo {
-                width: 72px;
-                height: 72px;
-                margin: 0 auto 16px;
-                background: linear-gradient(135deg, var(--accent), #65a30d);
-                border-radius: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 8px 32px var(--accent-glow);
-                position: relative;
-            }
-
-            .logo::before {
-                content: "";
-                position: absolute;
-                inset: -2px;
-                border-radius: 22px;
-                background: linear-gradient(135deg, var(--accent), transparent);
-                z-index: -1;
-                opacity: 0.5;
-            }
-
-            .logo svg {
-                width: 36px;
-                height: 36px;
-                fill: #000;
-            }
-
-            .header h1 {
-                font-size: 24px;
-                font-weight: 600;
-                margin-bottom: 4px;
-                letter-spacing: -0.5px;
-            }
-
-            .header p {
-                color: var(--tg-theme-hint-color, #8b8b8b);
-                font-size: 14px;
-                font-weight: 400;
-            }
-
-            /* Status Card */
-            .status-card {
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 20px;
-                padding: 24px;
-                margin-bottom: 16px;
-                backdrop-filter: blur(20px);
-                animation: fadeInUp 0.6s ease 0.1s both;
-            }
-
-            .status-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 20px;
-            }
-
-            .status-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 8px 16px;
-                border-radius: 100px;
-                font-size: 13px;
-                font-weight: 500;
-            }
-
-            .status-badge.active {
-                background: rgba(163, 230, 53, 0.15);
-                color: var(--success);
-            }
-
-            .status-badge.inactive {
-                background: rgba(255, 71, 87, 0.15);
-                color: var(--danger);
-            }
-
-            .status-badge.trial {
-                background: rgba(255, 165, 2, 0.15);
-                color: var(--warning);
-            }
-
-            .status-dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                background: currentColor;
-                animation: pulse 2s infinite;
-            }
-
-            .status-info {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            }
-
-            .info-block {
-                background: var(--glass);
-                border-radius: 14px;
-                padding: 16px;
-            }
-
-            .info-block label {
-                display: block;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                color: var(--tg-theme-hint-color);
-                margin-bottom: 6px;
-            }
-
-            .info-block .value {
-                font-family: "JetBrains Mono", monospace;
-                font-size: 20px;
-                font-weight: 600;
-                color: var(--tg-theme-text-color);
-            }
-
-            .info-block .value.accent {
-                color: var(--accent);
-            }
-
-            /* Quick Actions */
-            .quick-actions {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-                margin-bottom: 16px;
-                animation: fadeInUp 0.6s ease 0.2s both;
-            }
-
-            .action-btn {
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 16px;
-                padding: 20px 16px;
-                text-align: center;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                text-decoration: none;
-                color: inherit;
-            }
-
-            .action-btn:hover {
-                transform: translateY(-2px);
-                border-color: var(--accent);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            }
-
-            .action-btn:active {
-                transform: scale(0.98);
-            }
-
-            .action-btn.primary {
-                background: linear-gradient(135deg, var(--accent), #65a30d);
-                border: none;
-                color: #000;
-            }
-
-            .action-btn.primary:hover {
-                box-shadow: 0 8px 32px var(--accent-glow);
-            }
-
-            .action-icon {
-                width: 44px;
-                height: 44px;
-                margin: 0 auto 12px;
-                background: var(--glass);
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .action-btn.primary .action-icon {
-                background: rgba(0, 0, 0, 0.2);
-            }
-
-            .action-icon svg {
-                width: 22px;
-                height: 22px;
-                stroke: currentColor;
-                fill: none;
-                stroke-width: 2;
-            }
-
-            .action-btn span {
-                font-size: 14px;
-                font-weight: 500;
-            }
-
-            /* Menu Section */
-            .menu-section {
-                animation: fadeInUp 0.6s ease 0.3s both;
-            }
-
-            .menu-title {
-                font-size: 12px;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                color: var(--tg-theme-hint-color);
-                margin-bottom: 12px;
-                padding-left: 4px;
-            }
-
-            .menu-list {
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 20px;
-                overflow: hidden;
-                backdrop-filter: blur(20px);
-            }
-
-            .menu-item {
-                display: flex;
-                align-items: center;
-                padding: 16px 20px;
-                cursor: pointer;
-                transition: background 0.2s ease;
-                border-bottom: 1px solid var(--card-border);
-            }
-
-            .menu-item:last-child {
-                border-bottom: none;
-            }
-
-            .menu-item:hover {
-                background: var(--glass);
-            }
-
-            .menu-item:active {
-                background: rgba(255, 255, 255, 0.05);
-            }
-
-            .menu-icon {
-                width: 40px;
-                height: 40px;
-                background: var(--glass);
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin-right: 14px;
-            }
-
-            .menu-icon svg {
-                width: 20px;
-                height: 20px;
-                stroke: var(--accent);
-                fill: none;
-                stroke-width: 2;
-            }
-
-            .menu-content {
-                flex: 1;
-            }
-
-            .menu-content h4 {
-                font-size: 15px;
-                font-weight: 500;
-                margin-bottom: 2px;
-            }
-
-            .menu-content p {
-                font-size: 13px;
-                color: var(--tg-theme-hint-color);
-            }
-
-            .menu-arrow {
-                color: var(--tg-theme-hint-color);
-                opacity: 0.5;
-            }
-
-            .menu-arrow svg {
-                width: 18px;
-                height: 18px;
-                stroke: currentColor;
-                fill: none;
-                stroke-width: 2;
-            }
-
-            /* Balance Section */
-            .balance-section {
-                margin-top: 16px;
-                animation: fadeInUp 0.6s ease 0.4s both;
-            }
-
-            .balance-card {
-                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 16px;
-                padding: 16px;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .balance-card::before {
-                content: "";
-                position: absolute;
-                top: -50%;
-                right: -50%;
-                width: 100%;
-                height: 100%;
-                background: radial-gradient(
-                    circle,
-                    var(--accent-dim) 0%,
-                    transparent 70%
-                );
-                pointer-events: none;
-            }
-
-            .balance-header {
-                margin-bottom: 16px;
-            }
-
-            .balance-label {
-                font-size: 13px;
-                color: var(--tg-theme-hint-color);
-                margin-bottom: 8px;
-            }
-
-            .balance-value {
-                font-family: "JetBrains Mono", monospace;
-                font-size: 28px;
-                font-weight: 600;
-                margin-bottom: 12px;
-            }
-
-            .balance-value span {
-                font-size: 16px;
-                color: var(--tg-theme-hint-color);
-            }
-
-            .balance-stats {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 16px;
-                margin-bottom: 20px;
-                padding: 12px 16px;
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 12px;
-            }
-
-            .stat-item {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-            }
-
-            .stat-label {
-                font-size: 11px;
-                color: var(--tg-theme-hint-color);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-
-            .stat-value {
-                font-family: "JetBrains Mono", monospace;
-                font-size: 18px;
-                font-weight: 600;
-            }
-
-            .stat-value.accent {
-                color: var(--accent);
-            }
-
-            .stat-divider {
-                width: 1px;
-                height: 32px;
-                background: rgba(255, 255, 255, 0.1);
-            }
-
-            .topup-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                width: 100%;
-                padding: 14px;
-                background: var(--accent);
-                color: #000;
-                border: none;
-                border-radius: 12px;
-                font-family: inherit;
-                font-size: 15px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-
-            .topup-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 24px var(--accent-glow);
-            }
-
-            .topup-btn:active {
-                transform: scale(0.98);
-            }
-
-            .topup-btn svg {
-                width: 18px;
-                height: 18px;
-                stroke: currentColor;
-                fill: none;
-                stroke-width: 2.5;
-            }
-
-            /* Loading State */
-            .loading {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                min-height: 60vh;
-                gap: 16px;
-            }
-
-            .spinner {
-                width: 48px;
-                height: 48px;
-                border: 3px solid var(--glass);
-                border-top-color: var(--accent);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-
-            .loading p {
-                color: var(--tg-theme-hint-color);
-                font-size: 14px;
-            }
-
-            /* Animations */
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes fadeInDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes pulse {
-                0%,
-                100% {
-                    opacity: 1;
-                }
-                50% {
-                    opacity: 0.5;
-                }
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            /* Responsive */
-            @media (max-width: 380px) {
-                .container {
-                    padding: 12px;
-                }
-
-                .status-info {
-                    grid-template-columns: 1fr;
-                }
-
-                .quick-actions {
-                    grid-template-columns: 1fr;
-                }
-            }
-
-            /* Modal */
-            .modal-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.8);
-                backdrop-filter: blur(8px);
-                z-index: 1000;
-                display: none;
-                align-items: flex-end;
-                justify-content: center;
-                padding: 16px;
-            }
-
-            .modal-overlay.active {
-                display: flex;
-                animation: fadeIn 0.3s ease;
-            }
-
-            .modal {
-                background: var(--tg-theme-secondary-bg-color);
-                border-radius: 24px 24px 0 0;
-                width: 100%;
-                max-width: 440px;
-                max-height: 80vh;
-                overflow-y: auto;
-                animation: slideUp 0.3s ease;
-            }
-
-            .modal-header {
-                padding: 20px 24px;
-                border-bottom: 1px solid var(--card-border);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-            .modal-header h3 {
-                font-size: 18px;
-                font-weight: 600;
-            }
-
-            .modal-close {
-                width: 32px;
-                height: 32px;
-                background: var(--glass);
-                border: none;
-                border-radius: 50%;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: var(--tg-theme-hint-color);
-            }
-
-            .modal-close svg {
-                width: 18px;
-                height: 18px;
-                stroke: currentColor;
-                fill: none;
-                stroke-width: 2;
-            }
-
-            .modal-body {
-                padding: 24px;
-            }
-
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                }
-                to {
-                    opacity: 1;
-                }
-            }
-
-            @keyframes slideUp {
-                from {
-                    transform: translateY(100%);
-                }
-                to {
-                    transform: translateY(0);
-                }
-            }
-
-            /* Amount selector */
-            .amount-grid {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 10px;
-                margin-bottom: 20px;
-            }
-
-            .amount-option {
-                padding: 16px 12px;
-                background: var(--glass);
-                border: 2px solid transparent;
-                border-radius: 12px;
-                text-align: center;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .amount-option:hover {
-                background: var(--accent-dim);
-            }
-
-            .amount-option.selected {
-                border-color: var(--accent);
-                background: var(--accent-dim);
-            }
-
-            .amount-option .amount {
-                font-family: "JetBrains Mono", monospace;
-                font-size: 18px;
-                font-weight: 600;
-                margin-bottom: 4px;
-            }
-
-            .amount-option .days {
-                font-size: 12px;
-                color: var(--tg-theme-hint-color);
-            }
-
-            /* Install Button */
-            .install-btn-wrapper {
-                margin-top: 16px;
-                animation: fadeInUp 0.6s ease 0.4s both;
-            }
-
-            .install-open-btn {
-                width: 100%;
-                display: flex;
-                align-items: center;
-                gap: 14px;
-                padding: 16px 20px;
-                background: linear-gradient(135deg, rgba(163, 230, 53, 0.15), rgba(101, 163, 13, 0.1));
-                border: 1px solid rgba(163, 230, 53, 0.3);
-                border-radius: 16px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .install-open-btn:hover {
-                transform: translateY(-2px);
-                border-color: var(--accent);
-                box-shadow: 0 8px 24px rgba(163, 230, 53, 0.2);
-            }
-
-            .install-open-icon {
-                width: 48px;
-                height: 48px;
-                background: var(--accent);
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #000;
-            }
-
-            .install-open-text {
-                flex: 1;
-                text-align: left;
-            }
-
-            .install-open-title {
-                display: block;
-                font-size: 15px;
-                font-weight: 600;
-                color: var(--tg-theme-text-color);
-                margin-bottom: 2px;
-            }
-
-            .install-open-desc {
-                display: block;
-                font-size: 13px;
-                color: var(--tg-theme-hint-color);
-            }
-
-            .install-open-arrow {
-                color: var(--tg-theme-hint-color);
-            }
-
-            /* Fullscreen Modal */
-            .fullscreen-modal {
-                position: fixed;
-                inset: 0;
-                background: var(--tg-theme-bg-color, #0f0f0f);
-                z-index: 2000;
-                display: none;
-                flex-direction: column;
-                animation: slideInRight 0.3s ease;
-            }
-
-            .fullscreen-modal.active {
-                display: flex;
-            }
-
-            @keyframes slideInRight {
-                from { transform: translateX(100%); }
-                to { transform: translateX(0); }
-            }
-
-            .fullscreen-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 16px;
-                border-bottom: 1px solid var(--card-border);
-                background: var(--tg-theme-secondary-bg-color, #1a1a1a);
-            }
-
-            .back-btn {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                background: none;
-                border: none;
-                color: var(--accent);
-                font-family: inherit;
-                font-size: 15px;
-                cursor: pointer;
-                padding: 8px 0;
-            }
-
-            .fullscreen-title {
-                font-size: 16px;
-                font-weight: 600;
-                color: var(--tg-theme-text-color);
-            }
-
-            .header-spacer {
-                width: 60px;
-            }
-
-            .fullscreen-content {
-                flex: 1;
-                overflow-y: auto;
-                padding: 20px 16px;
-            }
-
-            .platform-selector {
-                display: flex;
-                gap: 8px;
-                margin-bottom: 20px;
-            }
-
-            .platform-btn {
-                flex: 1;
-                padding: 12px 16px;
-                background: var(--glass);
-                border: 1px solid var(--card-border);
-                border-radius: 12px;
-                color: var(--tg-theme-hint-color);
-                font-family: inherit;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .platform-btn.active {
-                background: var(--accent);
-                color: #000;
-                border-color: var(--accent);
-            }
-
-            .install-steps {
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-            }
-
-            .step-card {
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 16px;
-                padding: 20px;
-                backdrop-filter: blur(20px);
-            }
-
-            .step-header {
-                display: flex;
-                gap: 12px;
-                align-items: flex-start;
-                margin-bottom: 16px;
-            }
-
-            .step-num {
-                width: 28px;
-                height: 28px;
-                min-width: 28px;
-                background: var(--accent);
-                color: #000;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 14px;
-                font-weight: 600;
-            }
-
-            .step-header p {
-                font-size: 14px;
-                line-height: 1.5;
-                color: var(--tg-theme-text-color);
-                margin: 0;
-            }
-
-            .step-header p strong {
-                color: var(--accent);
-            }
-
-            .download-btn-large {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
-                width: 100%;
-                padding: 14px 24px;
-                background: linear-gradient(135deg, #ff6b35, #f7931e);
-                color: #fff;
-                border: none;
-                border-radius: 12px;
-                font-family: inherit;
-                font-size: 15px;
-                font-weight: 600;
-                text-decoration: none;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .download-btn-large:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
-            }
-
-            .key-box-large {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 16px;
-                background: rgba(0, 0, 0, 0.4);
-                border: 1px solid var(--card-border);
-                border-radius: 12px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .key-box-large:hover {
-                border-color: var(--accent);
-                background: rgba(163, 230, 53, 0.1);
-            }
-
-            .key-box-large:active {
-                transform: scale(0.98);
-            }
-
-            .key-box-large svg {
-                color: var(--accent);
-                min-width: 18px;
-            }
-
-            .key-box-large span {
-                font-family: "JetBrains Mono", monospace;
-                font-size: 12px;
-                color: var(--tg-theme-text-color);
-                word-break: break-all;
-                line-height: 1.4;
-            }
-
-            .step-visual {
-                margin-top: 8px;
-            }
-
-            .visual-hint {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 16px;
-                background: rgba(0, 0, 0, 0.3);
-                border-radius: 12px;
-                border: 1px dashed var(--card-border);
-            }
-
-            .visual-hint span {
-                font-size: 13px;
-                color: var(--tg-theme-hint-color);
-                line-height: 1.4;
-            }
-
-            /* Devices Section */
-            .devices-section {
-                padding: 0 16px;
-                margin-bottom: 12px;
-            }
-
-            .devices-card {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 16px;
-                background: var(--card-bg);
-                border: 1px solid var(--card-border);
-                border-radius: 16px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .devices-card:hover {
-                border-color: var(--accent);
-                background: rgba(163, 230, 53, 0.05);
-            }
-
-            .devices-icon {
-                width: 44px;
-                height: 44px;
-                background: rgba(163, 230, 53, 0.15);
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: var(--accent);
-            }
-
-            .devices-info {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-            }
-
-            .devices-title {
-                font-size: 14px;
-                font-weight: 600;
-                color: var(--tg-theme-text-color);
-            }
-
-            .devices-count {
-                font-size: 13px;
-                color: var(--tg-theme-hint-color);
-            }
-
-            .devices-arrow {
-                color: var(--tg-theme-hint-color);
-            }
-
-            /* Devices Modal Content */
-            .devices-modal-content {
-                padding: 0;
-            }
-
-            .devices-list {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .device-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 16px;
-                background: rgba(255, 255, 255, 0.03);
-                border: 1px solid var(--card-border);
-                border-radius: 12px;
-            }
-
-            .device-icon {
-                width: 40px;
-                height: 40px;
-                background: rgba(163, 230, 53, 0.15);
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: var(--accent);
-            }
-
-            .device-info {
-                flex: 1;
-                min-width: 0;
-            }
-
-            .device-name {
-                font-size: 14px;
-                font-weight: 500;
-                color: var(--tg-theme-text-color);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .device-details {
-                font-size: 12px;
-                color: var(--tg-theme-hint-color);
-                margin-top: 2px;
-            }
-
-            .device-remove-btn {
-                width: 36px;
-                height: 36px;
-                border: none;
-                background: rgba(255, 59, 48, 0.15);
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                color: #ff3b30;
-                transition: all 0.2s ease;
-            }
-
-            .device-remove-btn:hover {
-                background: rgba(255, 59, 48, 0.25);
-            }
-
-            .no-devices {
-                text-align: center;
-                padding: 32px 16px;
-                color: var(--tg-theme-hint-color);
-            }
-
-            .no-devices svg {
-                width: 48px;
-                height: 48px;
-                margin-bottom: 12px;
-                opacity: 0.5;
-            }
-
-            .no-devices p {
-                font-size: 14px;
-            }
-
-            /* Hidden */
-            .hidden {
-                display: none !important;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="bg-pattern"></div>
-        <div class="bg-grid"></div>
-
-        <div class="container">
-            <!-- Loading State -->
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p>Загрузка...</p>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>VPN PLUS</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-card: #1c1c1e;
+            --bg-card-hover: #2c2c2e;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --accent: #a3e635;
+            --accent-dark: #65a30d;
+            --accent-glow: rgba(163, 230, 53, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 0 16px 32px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 0 50px;
+        }
+
+        .logo-text {
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            font-style: italic;
+        }
+
+        .logo-text .accent {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .balance-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .balance-info {
+            flex: 1;
+        }
+
+        .balance-amount {
+            display: flex;
+            align-items: baseline;
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+
+        .balance-value {
+            font-size: 48px;
+            font-weight: 300;
+            line-height: 1;
+        }
+
+        .balance-currency {
+            font-size: 24px;
+            font-weight: 300;
+            color: var(--text-secondary);
+        }
+
+        .tariff-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .topup-link {
+            color: var(--accent);
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .topup-link:hover {
+            text-decoration: underline;
+        }
+
+        .topup-btn {
+            width: 44px;
+            height: 44px;
+            background: var(--accent);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            flex-shrink: 0;
+            margin-top: 8px;
+        }
+
+        .topup-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .topup-btn:active {
+            transform: scale(0.95);
+        }
+
+        .topup-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: #000;
+            stroke-width: 2.5;
+        }
+
+        .setup-card {
+            background: var(--accent);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .setup-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .setup-card:active {
+            transform: scale(0.98);
+        }
+
+        .setup-content h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000;
+            margin-bottom: 4px;
+        }
+
+        .setup-content p {
+            font-size: 13px;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .setup-arrow {
+            width: 44px;
+            height: 44px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .setup-arrow svg {
+            width: 20px;
+            height: 20px;
+            stroke: #000;
+            stroke-width: 2;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .info-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px 18px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .info-card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .info-card:active {
+            transform: scale(0.98);
+        }
+
+        .info-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .info-value.accent {
+            color: var(--accent);
+        }
+
+        .support-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px 18px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .support-card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .support-card:active {
+            transform: scale(0.98);
+        }
+
+        .support-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .support-text {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            z-index: 10;
+        }
+
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .amount-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .amount-option {
+            padding: 16px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .amount-option:hover {
+            background: rgba(163, 230, 53, 0.1);
+        }
+
+        .amount-option.selected {
+            border-color: var(--accent);
+            background: rgba(163, 230, 53, 0.15);
+        }
+
+        .amount-option .amount {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .amount-option .days {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .custom-amount-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .custom-input {
+            flex: 1;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .custom-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .custom-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .pay-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .pay-btn:active {
+            transform: scale(0.98);
+        }
+
+        .setup-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .setup-step {
+            display: flex;
+            gap: 16px;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .step-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .app-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .app-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .app-btn:hover {
+            background: rgba(163, 230, 53, 0.2);
+        }
+
+        .copy-key-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .copy-key-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .copy-key-btn:active {
+            transform: scale(0.98);
+        }
+
+        .copy-key-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: #000;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .referral-bonus-display {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .referral-bonus-big {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .referral-bonus-display p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .referral-link-box {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .referral-input {
+            flex: 1;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .copy-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .copy-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: #000;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .share-btn {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .share-btn:hover {
+            background: rgba(163, 230, 53, 0.1);
+        }
+
+        .referral-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .devices-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .device-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .device-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .device-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(163, 230, 53, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .device-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: var(--accent);
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .device-name {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .device-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .device-remove {
+            padding: 8px 14px;
+            background: rgba(255, 71, 87, 0.15);
+            color: #ff4757;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .device-remove:hover {
+            background: rgba(255, 71, 87, 0.25);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .support-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .support-option {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s;
+        }
+
+        .support-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .option-icon {
+            font-size: 20px;
+        }
+
+        .option-text {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo-text">
+                VPN<span class="accent">PLUS</span>
             </div>
+        </header>
 
-            <!-- Main Content -->
-            <div id="content" class="hidden">
-                <!-- Header -->
-                <div class="header">
-                    <div class="logo">
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-                            />
-                            <path d="M9 12l2 2 4-4" />
-                        </svg>
+        <section class="balance-card" id="balance-section">
+            <div class="balance-info">
+                <div class="balance-amount">
+                    <span class="balance-value" id="balance-value">0</span>
+                    <span class="balance-currency">₽</span>
+                </div>
+                <div class="tariff-text" id="tariff-text">Тариф 5₽/день за устройство</div>
+                <a class="topup-link" id="topup-link">Пополнить баланс</a>
+            </div>
+            <button class="topup-btn" id="topup-btn">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </section>
+
+        <section class="setup-card" id="setup-btn">
+            <div class="setup-content">
+                <h3>Установка и подключение</h3>
+                <p>Инструкция по шагам</p>
+            </div>
+            <div class="setup-arrow">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </section>
+
+        <section class="info-row">
+            <div class="info-card" id="referral-btn">
+                <span class="info-label">Пригласи друга</span>
+                <span class="info-value accent" id="referral-bonus">+30₽</span>
+            </div>
+            <div class="info-card" id="devices-btn">
+                <span class="info-label">Мои устройства</span>
+                <span class="info-value" id="devices-count">0</span>
+            </div>
+        </section>
+
+        <section class="support-card" id="support-btn">
+            <span class="support-label">Поддержка</span>
+            <span class="support-text">Помощь, документация, платежи</span>
+        </section>
+    </div>
+
+    <div class="modal-overlay" id="topup-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Пополнение баланса</h3>
+                <button class="modal-close" id="close-topup">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="amount-grid">
+                    <div class="amount-option" data-amount="100">
+                        <div class="amount">100₽</div>
+                        <div class="days">20 дней</div>
                     </div>
-                    <h1>VPN Keeper</h1>
-                    <p id="username">Загрузка...</p>
-                </div>
-
-                <!-- Balance Card -->
-                <div class="balance-section">
-                    <div class="balance-card">
-                        <div class="balance-header">
-                            <div id="status-badge" class="status-badge inactive">
-                                <div class="status-dot"></div>
-                                <span>Неактивна</span>
-                            </div>
-                        </div>
-                        <div class="balance-label">Ваш баланс</div>
-                        <div id="balance" class="balance-value">
-                            0<span>₽</span>
-                        </div>
-                        <div class="balance-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Осталось дней</span>
-                                <span id="days-left" class="stat-value">0</span>
-                            </div>
-                            <div class="stat-divider"></div>
-                            <div class="stat-item">
-                                <span class="stat-label">Цена в день</span>
-                                <span id="daily-price" class="stat-value accent">6₽</span>
-                            </div>
-                        </div>
-                        <button class="topup-btn" onclick="openTopupModal()">
-                            <svg viewBox="0 0 24 24">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                            Пополнить баланс
-                        </button>
+                    <div class="amount-option" data-amount="300">
+                        <div class="amount">300₽</div>
+                        <div class="days">60 дней</div>
                     </div>
-                </div>
-
-                <!-- Installation Button -->
-                <div id="install-btn-wrapper" class="install-btn-wrapper hidden">
-                    <button class="install-open-btn" onclick="openInstallModal()">
-                        <div class="install-open-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                        </div>
-                        <div class="install-open-text">
-                            <span class="install-open-title">Установка и подключение</span>
-                            <span class="install-open-desc">Инструкция по настройке VPN</span>
-                        </div>
-                        <div class="install-open-arrow">
-                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"/>
-                            </svg>
-                        </div>
-                    </button>
-                </div>
-
-                <!-- Devices Section -->
-                <div id="devices-section" class="devices-section">
-                    <div class="devices-card" onclick="openDevicesModal()">
-                        <div class="devices-icon">
-                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                                <line x1="12" y1="18" x2="12.01" y2="18"/>
-                            </svg>
-                        </div>
-                        <div class="devices-info">
-                            <span class="devices-title">Подключенные устройства</span>
-                            <span id="devices-count" class="devices-count">0 устройств</span>
-                        </div>
-                        <div class="devices-arrow">
-                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
-                                <polyline points="9 18 15 12 9 6"/>
-                            </svg>
-                        </div>
+                    <div class="amount-option selected" data-amount="500">
+                        <div class="amount">500₽</div>
+                        <div class="days">100 дней</div>
                     </div>
                 </div>
-
-                <!-- Menu Section -->
-                <div class="menu-section">
-                    <div class="menu-title">Настройки</div>
-                    <div class="menu-list">
-                        <div class="menu-item" onclick="showSubscription()">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <rect
-                                        x="3"
-                                        y="4"
-                                        width="18"
-                                        height="18"
-                                        rx="2"
-                                        ry="2"
-                                    />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
-                                </svg>
-                            </div>
-                            <div class="menu-content">
-                                <h4>Подписка</h4>
-                                <p>Управление подпиской VPN</p>
-                            </div>
-                            <div class="menu-arrow">
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="menu-item" onclick="showHistory()">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <polyline points="12 6 12 12 16 14" />
-                                </svg>
-                            </div>
-                            <div class="menu-content">
-                                <h4>История</h4>
-                                <p>Транзакции и платежи</p>
-                            </div>
-                            <div class="menu-arrow">
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="menu-item" onclick="showReferral()">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path
-                                        d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-                                    />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                </svg>
-                            </div>
-                            <div class="menu-content">
-                                <h4>Рефералы</h4>
-                                <p>Приглашай друзей — получай бонусы</p>
-                            </div>
-                            <div class="menu-arrow">
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="menu-item" onclick="showSupport()">
-                            <div class="menu-icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path
-                                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                                    />
-                                </svg>
-                            </div>
-                            <div class="menu-content">
-                                <h4>Поддержка</h4>
-                                <p>Связаться с нами</p>
-                            </div>
-                            <div class="menu-arrow">
-                                <svg viewBox="0 0 24 24">
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
+                <div class="custom-amount-row">
+                    <input type="number" class="custom-input" id="custom-amount" placeholder="Другая сумма" min="50">
                 </div>
+                <button class="pay-btn" id="pay-btn">Оплатить</button>
             </div>
         </div>
+    </div>
 
-        <!-- Install Modal (Full Screen) -->
-        <div id="install-modal" class="fullscreen-modal">
-            <div class="fullscreen-header">
-                <button class="back-btn" onclick="closeInstallModal()">
-                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"/>
-                    </svg>
-                    Назад
-                </button>
-                <div class="fullscreen-title">VPN Keeper</div>
-                <div class="header-spacer"></div>
+    <div class="modal-overlay" id="setup-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Установка VPN</h3>
+                <button class="modal-close" id="close-setup">&times;</button>
             </div>
-            
-            <div class="fullscreen-content">
-                <div class="platform-selector">
-                    <button class="platform-btn active" data-platform="ios" onclick="selectPlatform('ios')">iOS</button>
-                    <button class="platform-btn" data-platform="android" onclick="selectPlatform('android')">Android</button>
-                </div>
-
-                <div class="install-steps">
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-num">1</span>
-                            <p>Скачайте приложение <strong id="app-name">Happ</strong> для <span id="platform-name">iOS</span> и установите его на ваше устройство</p>
-                        </div>
-                        <a id="download-btn" href="#" class="download-btn-large" target="_blank">
-                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                            Скачать
-                        </a>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-num">2</span>
-                            <p>Скопируйте VPN ключ, нажав на него</p>
-                        </div>
-                        <div id="vpn-key-box" class="key-box-large" onclick="copyVpnKey()">
-                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                            </svg>
-                            <span id="vpn-key-display">Загрузка ключа...</span>
-                        </div>
-                    </div>
-
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-num">3</span>
-                            <p>Вставьте ключ в приложение, дождитесь загрузки конфигурации и включите VPN</p>
-                        </div>
-                        <div class="step-visual">
-                            <div class="visual-hint">
-                                <svg viewBox="0 0 24 24" width="32" height="32" stroke="var(--accent)" fill="none" stroke-width="1.5">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <path d="M12 16v-4"/>
-                                    <path d="M12 8h.01"/>
-                                </svg>
-                                <span>URL подписки → Вставить из буфера обмена</span>
+            <div class="modal-body">
+                <div class="setup-steps">
+                    <div class="setup-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Скачайте приложение</h4>
+                            <p>Установите клиент для вашего устройства</p>
+                            <div class="app-buttons">
+                                <a href="#" class="app-btn" id="app-ios">iOS</a>
+                                <a href="#" class="app-btn" id="app-android">Android</a>
+                                <a href="#" class="app-btn" id="app-windows">Windows</a>
+                                <a href="#" class="app-btn" id="app-macos">macOS</a>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Topup Modal -->
-        <div id="topup-modal" class="modal-overlay">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>Пополнение баланса</h3>
-                    <button class="modal-close" onclick="closeTopupModal()">
-                        <svg viewBox="0 0 24 24">
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="amount-grid">
-                        <div
-                            class="amount-option"
-                            data-amount="100"
-                            onclick="selectAmount(this)"
-                        >
-                            <div class="amount">100₽</div>
-                            <div class="days">~16 дней</div>
-                        </div>
-                        <div
-                            class="amount-option selected"
-                            data-amount="300"
-                            onclick="selectAmount(this)"
-                        >
-                            <div class="amount">300₽</div>
-                            <div class="days">~50 дней</div>
-                        </div>
-                        <div
-                            class="amount-option"
-                            data-amount="500"
-                            onclick="selectAmount(this)"
-                        >
-                            <div class="amount">500₽</div>
-                            <div class="days">~83 дня</div>
-                        </div>
-                        <div
-                            class="amount-option"
-                            data-amount="1000"
-                            onclick="selectAmount(this)"
-                        >
-                            <div class="amount">1000₽</div>
-                            <div class="days">~166 дней</div>
-                        </div>
-                        <div
-                            class="amount-option"
-                            data-amount="2000"
-                            onclick="selectAmount(this)"
-                        >
-                            <div class="amount">2000₽</div>
-                            <div class="days">~333 дня</div>
-                        </div>
-                        <div
-                            class="amount-option"
-                            data-amount="5000"
-                            onclick="selectAmount(this)"
-                        >
-                            <div class="amount">5000₽</div>
-                            <div class="days">~833 дня</div>
-                        </div>
-                    </div>
-                    <button class="topup-btn" onclick="processPayment()">
-                        <svg viewBox="0 0 24 24">
-                            <rect
-                                x="1"
-                                y="4"
-                                width="22"
-                                height="16"
-                                rx="2"
-                                ry="2"
-                            />
-                            <line x1="1" y1="10" x2="23" y2="10" />
-                        </svg>
-                        Оплатить
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Devices Modal -->
-        <div id="devices-modal" class="fullscreen-modal">
-            <div class="fullscreen-modal-content">
-                <div class="fullscreen-modal-header">
-                    <button class="back-btn" onclick="closeDevicesModal()">
-                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-                            <polyline points="15 18 9 12 15 6"/>
-                        </svg>
-                    </button>
-                    <h2>Устройства</h2>
-                    <div style="width: 40px;"></div>
-                </div>
-                <div class="fullscreen-modal-body">
-                    <div id="devices-loading" class="loading">
-                        <div class="spinner"></div>
-                        <p>Загрузка...</p>
-                    </div>
-                    <div id="devices-content" class="hidden">
-                        <div id="devices-list" class="devices-list"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            // Telegram WebApp
-            const tg = window.Telegram?.WebApp;
-            let userData = null;
-            let selectedAmount = 300;
-            let devicesData = null;
-
-            // Initialize
-            document.addEventListener("DOMContentLoaded", async () => {
-                if (tg) {
-                    tg.ready();
-                    tg.expand();
-                    tg.setHeaderColor("#0f0f0f");
-                    tg.setBackgroundColor("#0f0f0f");
-
-                    // Apply Telegram theme
-                    if (tg.themeParams) {
-                        document.documentElement.style.setProperty(
-                            "--tg-theme-bg-color",
-                            tg.themeParams.bg_color || "#0f0f0f",
-                        );
-                        document.documentElement.style.setProperty(
-                            "--tg-theme-text-color",
-                            tg.themeParams.text_color || "#ffffff",
-                        );
-                        document.documentElement.style.setProperty(
-                            "--tg-theme-hint-color",
-                            tg.themeParams.hint_color || "#8b8b8b",
-                        );
-                        document.documentElement.style.setProperty(
-                            "--tg-theme-secondary-bg-color",
-                            tg.themeParams.secondary_bg_color || "#1a1a1a",
-                        );
-                    }
-                }
-
-                await loadUserData();
-            });
-
-            async function loadUserData() {
-                try {
-                    let telegramId = null;
-
-                    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                        telegramId = tg.initDataUnsafe.user.id;
-                    }
-
-                    // For testing without Telegram
-                    if (!telegramId) {
-                        telegramId =
-                            new URLSearchParams(window.location.search).get(
-                                "user_id",
-                            ) || 123456789;
-                    }
-
-                    const response = await fetch(`/api/user/${telegramId}`);
-
-                    if (response.ok) {
-                        userData = await response.json();
-                        await updateUI();
-                    } else {
-                        // User not found - show demo data
-                        userData = {
-                            telegram_id: telegramId,
-                            username:
-                                tg?.initDataUnsafe?.user?.username || "User",
-                            balance: 0,
-                            subscription: null,
-                            trial_used: false,
-                        };
-                        await updateUI();
-                    }
-                } catch (error) {
-                    console.error("Error loading user data:", error);
-                    // Show demo data on error
-                    userData = {
-                        telegram_id: 0,
-                        username: "Demo User",
-                        balance: 150,
-                        subscription: {
-                            status: "active",
-                            expires_at: new Date(
-                                Date.now() + 7 * 24 * 60 * 60 * 1000,
-                            ).toISOString(),
-                            days_paid: 7,
-                            daily_price: 6.0,
-                        },
-                        trial_used: true,
-                    };
-                    await updateUI();
-                }
-
-                document.getElementById("loading").classList.add("hidden");
-                document.getElementById("content").classList.remove("hidden");
-            }
-
-            async function updateUI() {
-                if (!userData) return;
-
-                // Username
-                const usernameEl = document.getElementById("username");
-                usernameEl.textContent = userData.username
-                    ? `@${userData.username}`
-                    : "Пользователь";
-
-                // Balance
-                const balanceEl = document.getElementById("balance");
-                balanceEl.innerHTML = `${Math.floor(userData.balance)}<span>₽</span>`;
-
-                // Subscription status
-                const statusBadge = document.getElementById("status-badge");
-                const daysLeft = document.getElementById("days-left");
-                const dailyPrice = document.getElementById("daily-price");
-
-                const sub = userData.subscription;
-                const price = sub?.daily_price || 6;
-                const deviceCount = sub?.device_count || 1;
-                const pricePerDevice = sub?.price_per_device || 6;
-                
-                dailyPrice.textContent = deviceCount > 1 ? `${price}₽ (${deviceCount} уст.)` : `${price}₽`;
-
-                if (sub) {
-                    const subDaysLeft = sub.days_left || 0;
-
-                    if (sub.status === "active") {
-                        statusBadge.className = "status-badge active";
-                        statusBadge.innerHTML =
-                            '<div class="status-dot"></div><span>Активна</span>';
-                        daysLeft.textContent = subDaysLeft;
-                    } else if (sub.status === "trial") {
-                        statusBadge.className = "status-badge trial";
-                        statusBadge.innerHTML =
-                            '<div class="status-dot"></div><span>Пробный период</span>';
-                        daysLeft.textContent = subDaysLeft > 0 ? subDaysLeft : "1";
-                    } else {
-                        statusBadge.className = "status-badge inactive";
-                        statusBadge.innerHTML =
-                            '<div class="status-dot"></div><span>Неактивна</span>';
-                        daysLeft.textContent = "0";
-                    }
-                } else {
-                    statusBadge.className = "status-badge inactive";
-                    statusBadge.innerHTML =
-                        '<div class="status-dot"></div><span>Неактивна</span>';
-                    daysLeft.textContent = "0";
-                }
-                
-                // Update installation section
-                updateInstallSection();
-                
-                // Update devices section
-                await updateDevicesSection();
-            }
-
-            // Modal functions
-            function openTopupModal() {
-                document.getElementById("topup-modal").classList.add("active");
-                if (tg) tg.HapticFeedback?.impactOccurred("light");
-            }
-
-            function closeTopupModal() {
-                document
-                    .getElementById("topup-modal")
-                    .classList.remove("active");
-            }
-
-            function selectAmount(element) {
-                document
-                    .querySelectorAll(".amount-option")
-                    .forEach((el) => el.classList.remove("selected"));
-                element.classList.add("selected");
-                selectedAmount = parseInt(element.dataset.amount);
-                if (tg) tg.HapticFeedback?.selectionChanged();
-            }
-
-            async function processPayment() {
-                if (tg) tg.HapticFeedback?.impactOccurred("medium");
-                
-                if (!userData || !userData.telegram_id) {
-                    if (tg) tg.showAlert("Ошибка: пользователь не найден");
-                    return;
-                }
-                
-                try {
-                    const response = await fetch("/api/payment/create", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            telegram_id: userData.telegram_id,
-                            amount: selectedAmount
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.payment_url) {
-                        closeTopupModal();
-                        if (tg) {
-                            tg.openLink(data.payment_url);
-                        } else {
-                            window.open(data.payment_url, "_blank");
-                        }
-                    } else {
-                        if (tg) tg.showAlert(data.error || "Ошибка создания платежа");
-                        else alert(data.error || "Ошибка создания платежа");
-                    }
-                } catch (error) {
-                    console.error("Payment error:", error);
-                    if (tg) tg.showAlert("Ошибка соединения с сервером");
-                    else alert("Ошибка соединения с сервером");
-                }
-            }
-
-            async function activateTrial() {
-                if (tg) tg.HapticFeedback?.impactOccurred("medium");
-
-                if (userData && userData.trial_used) {
-                    if (tg) tg.showAlert("Пробный период уже был использован");
-                    else alert("Пробный период уже был использован");
-                    return;
-                }
-
-                const doActivate = async () => {
-                    try {
-                        const response = await fetch("/api/trial/activate", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ telegram_id: userData.telegram_id })
-                        });
-                        
-                        const data = await response.json();
-                        
-                        if (data.status === "ok") {
-                            userData.trial_used = true;
-                            if (tg) tg.showAlert("✅ Пробный период активирован! Ключ доступа отправлен в бот.");
-                            else alert("Пробный период активирован!");
-                            await loadUserData();
-                        } else {
-                            if (tg) tg.showAlert(data.error || "Ошибка активации");
-                            else alert(data.error || "Ошибка активации");
-                        }
-                    } catch (error) {
-                        console.error("Trial activation error:", error);
-                        if (tg) tg.showAlert("Ошибка соединения с сервером");
-                        else alert("Ошибка соединения с сервером");
-                    }
-                };
-
-                if (tg) {
-                    tg.showConfirm("Активировать пробный период?", (confirmed) => {
-                        if (confirmed) doActivate();
-                    });
-                } else {
-                    if (confirm("Активировать пробный период?")) doActivate();
-                }
-            }
-
-            async function showSubscription() {
-                if (tg) tg.HapticFeedback?.impactOccurred("light");
-                
-                if (!userData || !userData.subscription || userData.subscription.status === "inactive") {
-                    if (tg) tg.showAlert("У вас нет активной подписки");
-                    else alert("У вас нет активной подписки");
-                    return;
-                }
-                
-                try {
-                    const response = await fetch(`/api/subscription/key/${userData.telegram_id}`);
-                    const data = await response.json();
-                    
-                    if (data.key) {
-                        if (tg) {
-                            tg.showPopup({
-                                title: "Ваш VPN ключ",
-                                message: data.key.substring(0, 50) + "...",
-                                buttons: [
-                                    { id: "copy", type: "default", text: "Скопировать" },
-                                    { id: "close", type: "cancel", text: "Закрыть" }
-                                ]
-                            }, (buttonId) => {
-                                if (buttonId === "copy") {
-                                    navigator.clipboard.writeText(data.key);
-                                    tg.showAlert("Ключ скопирован!");
-                                }
-                            });
-                        } else {
-                            navigator.clipboard.writeText(data.key);
-                            alert("Ключ скопирован: " + data.key);
-                        }
-                    } else {
-                        if (tg) tg.showAlert(data.error || "Ключ не найден");
-                        else alert(data.error || "Ключ не найден");
-                    }
-                } catch (error) {
-                    console.error("Key fetch error:", error);
-                    if (tg) tg.showAlert("Ошибка получения ключа");
-                }
-            }
-
-            function showHistory() {
-                if (tg) {
-                    tg.HapticFeedback?.impactOccurred("light");
-                    tg.showAlert("История транзакций скоро будет доступна");
-                }
-            }
-
-            function showReferral() {
-                if (tg) {
-                    tg.HapticFeedback?.impactOccurred("light");
-                    const botUsername = "harleyvpn_bot";
-                    const refLink = `https://t.me/${botUsername}?start=ref${userData?.telegram_id || ""}`;
-                    tg.showPopup({
-                        title: "Реферальная программа",
-                        message: "За каждого приглашенного друга вы получите бонус!",
-                        buttons: [
-                            { id: "copy", type: "default", text: "Скопировать ссылку" },
-                            { id: "share", type: "default", text: "Поделиться" },
-                            { id: "close", type: "cancel", text: "Закрыть" }
-                        ]
-                    }, (buttonId) => {
-                        if (buttonId === "copy") {
-                            navigator.clipboard.writeText(refLink);
-                            tg.showAlert("Ссылка скопирована!");
-                        } else if (buttonId === "share") {
-                            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Присоединяйся к VPN Keeper!")}`);
-                        }
-                    });
-                }
-            }
-
-            function showSupport() {
-                if (tg) {
-                    tg.HapticFeedback?.impactOccurred("light");
-                    tg.openTelegramLink("https://t.me/harleyvpn_support");
-                }
-            }
-
-            // Installation section functions
-            let currentPlatform = 'ios';
-            let vpnKey = null;
-            
-            const appLinks = {
-                ios: 'https://apps.apple.com/app/happ/id6474552484',
-                android: 'https://play.google.com/store/apps/details?id=app.happ.client'
-            };
-            
-            const appNames = {
-                ios: 'Happ',
-                android: 'Happ'
-            };
-
-            function detectPlatform() {
-                const ua = navigator.userAgent || navigator.vendor || window.opera;
-                if (/android/i.test(ua)) return 'android';
-                if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return 'ios';
-                if (/Macintosh/.test(ua)) return 'ios';
-                return 'android';
-            }
-
-            function selectPlatform(platform) {
-                currentPlatform = platform;
-                document.querySelectorAll('.platform-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.platform === platform);
-                });
-                document.getElementById('app-name').textContent = appNames[platform];
-                document.getElementById('platform-name').textContent = platform === 'ios' ? 'iOS' : 'Android';
-                document.getElementById('download-btn').href = appLinks[platform];
-                if (tg) tg.HapticFeedback?.selectionChanged();
-            }
-
-            async function loadVpnKey() {
-                if (!userData || !userData.telegram_id) return;
-                
-                const keyDisplay = document.getElementById('vpn-key-display');
-                keyDisplay.textContent = 'Загрузка...';
-                
-                try {
-                    const response = await fetch(`/api/subscription/key/${userData.telegram_id}`);
-                    const data = await response.json();
-                    
-                    if (data.key) {
-                        vpnKey = data.key;
-                        keyDisplay.textContent = data.key;
-                    } else {
-                        keyDisplay.textContent = 'Ключ недоступен';
-                    }
-                } catch (error) {
-                    console.error('Error loading VPN key:', error);
-                    keyDisplay.textContent = 'Ошибка загрузки';
-                }
-            }
-
-            function copyVpnKey() {
-                if (!vpnKey) {
-                    if (tg) tg.showAlert('Ключ недоступен');
-                    return;
-                }
-                
-                navigator.clipboard.writeText(vpnKey).then(() => {
-                    if (tg) {
-                        tg.HapticFeedback?.notificationOccurred('success');
-                        tg.showAlert('✅ Ключ скопирован!');
-                    } else {
-                        alert('Ключ скопирован!');
-                    }
-                }).catch(() => {
-                    if (tg) tg.showAlert('Ошибка копирования');
-                });
-            }
-
-            function openInstallModal() {
-                if (tg) tg.HapticFeedback?.impactOccurred('light');
-                
-                const detected = detectPlatform();
-                selectPlatform(detected);
-                loadVpnKey();
-                
-                document.getElementById('install-modal').classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-
-            function closeInstallModal() {
-                document.getElementById('install-modal').classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            // Devices Modal Functions
-            async function openDevicesModal() {
-                document.getElementById('devices-modal').classList.add('active');
-                document.body.style.overflow = 'hidden';
-                document.getElementById('devices-loading').classList.remove('hidden');
-                document.getElementById('devices-content').classList.add('hidden');
-                
-                await loadDevices();
-            }
-
-            function closeDevicesModal() {
-                document.getElementById('devices-modal').classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            async function loadDevices() {
-                const telegramId = userData?.telegram_id;
-                if (!telegramId) return;
-                
-                try {
-                    const response = await fetch(`/api/devices/${telegramId}`);
-                    if (!response.ok) throw new Error('Failed to load devices');
-                    
-                    devicesData = await response.json();
-                    renderDevicesList();
-                } catch (error) {
-                    console.error('Error loading devices:', error);
-                    document.getElementById('devices-list').innerHTML = `
-                        <div class="no-devices">
-                            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <line x1="12" y1="8" x2="12" y2="12"/>
-                                <line x1="12" y1="16" x2="12.01" y2="16"/>
-                            </svg>
-                            <p>Ошибка загрузки устройств</p>
-                        </div>
-                    `;
-                } finally {
-                    document.getElementById('devices-loading').classList.add('hidden');
-                    document.getElementById('devices-content').classList.remove('hidden');
-                }
-            }
-
-            function renderDevicesList() {
-                const list = document.getElementById('devices-list');
-                
-                if (!devicesData || !devicesData.devices || devicesData.devices.length === 0) {
-                    list.innerHTML = `
-                        <div class="no-devices">
-                            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
-                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                                <line x1="12" y1="18" x2="12.01" y2="18"/>
-                            </svg>
-                            <p>Нет подключенных устройств</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                const devices = devicesData.devices;
-                list.innerHTML = devices.map((device, index) => {
-                    const deviceName = parseUserAgent(device.user_agent);
-                    const onlineAt = device.online_at ? formatDate(device.online_at) : '';
-                    const addedAt = device.added_at ? formatDate(device.added_at) : '';
-                    
-                    let details = '';
-                    if (onlineAt) {
-                        details = `Онлайн: ${onlineAt}`;
-                    } else if (addedAt) {
-                        details = `Добавлено: ${addedAt}`;
-                    } else {
-                        details = 'Подключено';
-                    }
-                    
-                    return `
-                        <div class="device-item">
-                            <div class="device-icon">
-                                ${getDeviceIcon(device.user_agent)}
-                            </div>
-                            <div class="device-info">
-                                <div class="device-name">${deviceName}</div>
-                                <div class="device-details">${details}</div>
-                            </div>
-                            <button class="device-remove-btn" onclick="removeDevice('${device.hwid}')">
-                                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
-                                    <polyline points="3 6 5 6 21 6"/>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <div class="setup-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Скопируйте ключ</h4>
+                            <p>Нажмите кнопку ниже для копирования</p>
+                            <button class="copy-key-btn" id="copy-key-btn">
+                                <span>Скопировать ключ</span>
+                                <svg viewBox="0 0 24 24">
+                                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
                                 </svg>
                             </button>
                         </div>
-                    `;
-                }).join('');
+                    </div>
+                    <div class="setup-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Вставьте ключ в приложение</h4>
+                            <p>Откройте приложение и добавьте конфигурацию по скопированному ключу</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="referral-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Пригласи друга</h3>
+                <button class="modal-close" id="close-referral">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="referral-bonus-display">
+                    <div class="referral-bonus-big">+30₽</div>
+                    <p>за каждого приглашенного друга</p>
+                </div>
+                <div class="referral-link-box">
+                    <input type="text" class="referral-input" id="referral-link" readonly value="Загрузка...">
+                    <button class="copy-btn" id="copy-referral">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="9" y="9" width="13" height="13" rx="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                        </svg>
+                    </button>
+                </div>
+                <button class="share-btn" id="share-btn">Поделиться ссылкой</button>
+                <div class="referral-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="referral-count">0</div>
+                        <div class="stat-label">Приглашено</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="referral-earned">0₽</div>
+                        <div class="stat-label">Заработано</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="devices-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Мои устройства</h3>
+                <button class="modal-close" id="close-devices">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="devices-list" id="devices-list">
+                    <div class="empty-state">
+                        <p>У вас пока нет подключенных устройств</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="support-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Поддержка</h3>
+                <button class="modal-close" id="close-support">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="support-options">
+                    <a href="#" class="support-option" id="faq-link">
+                        <span class="option-icon">❓</span>
+                        <span class="option-text">Частые вопросы (FAQ)</span>
+                    </a>
+                    <a href="#" class="support-option" id="docs-link">
+                        <span class="option-icon">📖</span>
+                        <span class="option-text">Документация</span>
+                    </a>
+                    <a href="#" class="support-option" id="payments-link">
+                        <span class="option-icon">💳</span>
+                        <span class="option-text">История платежей</span>
+                    </a>
+                    <a href="#" class="support-option" id="contact-link">
+                        <span class="option-icon">💬</span>
+                        <span class="option-text">Написать в поддержку</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        let userData = null;
+        let selectedAmount = 500;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (tg) {
+                tg.ready();
+                tg.expand();
+                tg.setHeaderColor('#000000');
+                tg.setBackgroundColor('#000000');
             }
 
-            function parseUserAgent(ua) {
-                if (!ua) return 'Неизвестное устройство';
-                
-                // Parse Happ client
-                const happMatch = ua.match(/Happ\/([0-9.]+)\/(\w+)/);
-                if (happMatch) {
-                    const version = happMatch[1];
-                    const platform = happMatch[2];
-                    if (platform === 'ios') return `iPhone (Happ ${version})`;
-                    if (platform === 'android') return `Android (Happ ${version})`;
-                    return `${platform} (Happ ${version})`;
-                }
-                
-                if (ua.includes('iPhone')) return 'iPhone';
-                if (ua.includes('iPad')) return 'iPad';
-                if (ua.includes('Android')) {
-                    const match = ua.match(/Android[^;]*;\s*([^)]+)/);
-                    return match ? match[1].trim() : 'Android';
-                }
-                if (ua.includes('Windows')) return 'Windows';
-                if (ua.includes('Mac')) return 'macOS';
-                if (ua.includes('Linux')) return 'Linux';
-                
-                return 'Устройство';
+            await loadUserData();
+            setupEventListeners();
+            document.getElementById('loading').classList.add('hidden');
+        });
+
+        async function loadUserData() {
+            if (!tg?.initData) {
+                console.log('No Telegram init data');
+                return;
             }
 
-            function getDeviceIcon(ua) {
-                if (!ua) {
-                    return '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
+            try {
+                const response = await fetch('/api/miniapp/subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ init_data: tg.initData })
+                });
+
+                if (response.ok) {
+                    userData = await response.json();
+                    updateUI();
                 }
-                
-                if (ua.includes('iPhone') || ua.includes('iPad') || ua.includes('Android')) {
-                    return '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>';
-                }
-                
-                return '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>';
+            } catch (error) {
+                console.error('Failed to load user data:', error);
+            }
+        }
+
+        function updateUI() {
+            if (!userData) return;
+
+            const balanceEl = document.getElementById('balance-value');
+            if (userData.user?.balance_kopeks !== undefined) {
+                const rubles = Math.floor(userData.user.balance_kopeks / 100);
+                balanceEl.textContent = rubles;
             }
 
-            function formatDate(dateStr) {
-                if (!dateStr) return 'Неизвестно';
-                const date = new Date(dateStr);
-                const now = new Date();
-                const diff = now - date;
-                
-                if (diff < 60000) return 'Сейчас';
-                if (diff < 3600000) return `${Math.floor(diff / 60000)} мин. назад`;
-                if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч. назад`;
-                if (diff < 604800000) return `${Math.floor(diff / 86400000)} дн. назад`;
-                
-                return date.toLocaleDateString('ru-RU');
+            const devicesEl = document.getElementById('devices-count');
+            if (userData.devices?.length !== undefined) {
+                devicesEl.textContent = userData.devices.length;
             }
 
-            async function removeDevice(hwid) {
-                if (!confirm('Удалить это устройство?')) return;
-                
-                const telegramId = userData?.telegram_id;
-                if (!telegramId) return;
-                
-                try {
-                    const response = await fetch(`/api/devices/${telegramId}/${encodeURIComponent(hwid)}`, {
-                        method: 'DELETE'
-                    });
-                    
-                    if (response.ok) {
-                        await loadDevices();
-                        await loadUserData();
-                    } else {
-                        const data = await response.json();
-                        alert(data.error || 'Ошибка удаления устройства');
-                    }
-                } catch (error) {
-                    console.error('Error removing device:', error);
-                    alert('Ошибка удаления устройства');
-                }
+            if (userData.referral_link) {
+                document.getElementById('referral-link').value = userData.referral_link;
             }
 
-            async function updateDevicesSection() {
-                const telegramId = userData?.telegram_id;
-                const countEl = document.getElementById('devices-count');
-                
-                if (!telegramId || !userData?.remnawave_uuid) {
-                    countEl.textContent = 'Нет устройств';
-                    return;
-                }
-                
-                try {
-                    const response = await fetch(`/api/devices/${telegramId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        const count = data.total || 0;
-                        countEl.textContent = 
-                            count === 0 ? 'Нет устройств' :
-                            count === 1 ? '1 устройство' :
-                            count < 5 ? `${count} устройства` : `${count} устройств`;
-                    }
-                } catch (error) {
-                    console.error('Error loading devices count:', error);
-                    countEl.textContent = 'Нет устройств';
-                }
+            if (userData.referral_count !== undefined) {
+                document.getElementById('referral-count').textContent = userData.referral_count;
             }
 
-            function updateInstallSection() {
-                const installBtn = document.getElementById('install-btn-wrapper');
-                if (userData && userData.subscription && 
-                    (userData.subscription.status === 'active' || userData.subscription.status === 'trial')) {
-                    installBtn.classList.remove('hidden');
-                } else {
-                    installBtn.classList.add('hidden');
-                }
+            if (userData.referral_earned !== undefined) {
+                document.getElementById('referral-earned').textContent = userData.referral_earned + '₽';
             }
+        }
 
-            // Close modal on backdrop click
-            document
-                .getElementById("topup-modal")
-                .addEventListener("click", (e) => {
-                    if (e.target.classList.contains("modal-overlay")) {
-                        closeTopupModal();
+        function setupEventListeners() {
+            document.getElementById('topup-btn').addEventListener('click', () => openModal('topup-modal'));
+            document.getElementById('topup-link').addEventListener('click', () => openModal('topup-modal'));
+            document.getElementById('setup-btn').addEventListener('click', () => openModal('setup-modal'));
+            document.getElementById('referral-btn').addEventListener('click', () => openModal('referral-modal'));
+            document.getElementById('devices-btn').addEventListener('click', () => openModal('devices-modal'));
+            document.getElementById('support-btn').addEventListener('click', () => openModal('support-modal'));
+
+            document.getElementById('close-topup').addEventListener('click', () => closeModal('topup-modal'));
+            document.getElementById('close-setup').addEventListener('click', () => closeModal('setup-modal'));
+            document.getElementById('close-referral').addEventListener('click', () => closeModal('referral-modal'));
+            document.getElementById('close-devices').addEventListener('click', () => closeModal('devices-modal'));
+            document.getElementById('close-support').addEventListener('click', () => closeModal('support-modal'));
+
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
                     }
                 });
-        </script>
-    </body>
+            });
+
+            document.querySelectorAll('.amount-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    document.querySelectorAll('.amount-option').forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedAmount = parseInt(option.dataset.amount);
+                    document.getElementById('custom-amount').value = '';
+                });
+            });
+
+            document.getElementById('custom-amount').addEventListener('input', (e) => {
+                if (e.target.value) {
+                    document.querySelectorAll('.amount-option').forEach(o => o.classList.remove('selected'));
+                    selectedAmount = parseInt(e.target.value);
+                }
+            });
+
+            document.getElementById('pay-btn').addEventListener('click', handlePayment);
+            document.getElementById('copy-key-btn').addEventListener('click', copySubscriptionKey);
+            document.getElementById('copy-referral').addEventListener('click', copyReferralLink);
+            document.getElementById('share-btn').addEventListener('click', shareReferralLink);
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        async function handlePayment() {
+            if (selectedAmount < 50) {
+                alert('Минимальная сумма 50₽');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/miniapp/payments/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        init_data: tg?.initData,
+                        amount_kopeks: selectedAmount * 100,
+                        payment_method: 'yookassa'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.payment_url) {
+                        window.open(data.payment_url, '_blank');
+                    }
+                } else {
+                    alert('Ошибка создания платежа');
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('Ошибка оплаты');
+            }
+        }
+
+        async function copySubscriptionKey() {
+            if (userData?.subscription_key) {
+                await navigator.clipboard.writeText(userData.subscription_key);
+                const btn = document.getElementById('copy-key-btn');
+                const originalText = btn.querySelector('span').textContent;
+                btn.querySelector('span').textContent = 'Скопировано!';
+                setTimeout(() => {
+                    btn.querySelector('span').textContent = originalText;
+                }, 2000);
+            } else {
+                alert('Ключ подписки не найден');
+            }
+        }
+
+        async function copyReferralLink() {
+            const link = document.getElementById('referral-link').value;
+            if (link && link !== 'Загрузка...') {
+                await navigator.clipboard.writeText(link);
+                alert('Ссылка скопирована!');
+            }
+        }
+
+        function shareReferralLink() {
+            const link = document.getElementById('referral-link').value;
+            if (link && link !== 'Загрузка...' && tg) {
+                tg.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Присоединяйся к VPN PLUS!'));
+            }
+        }
+    </script>
+</body>
 </html>
