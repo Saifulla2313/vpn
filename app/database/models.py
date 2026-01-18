@@ -90,9 +90,16 @@ class User(Base):
     language_code = Column(String(10), default="ru")
     
     balance = Column(Float, default=0.0)
+    total_spent = Column(Float, default=0.0)
+    purchase_count = Column(Integer, default=0)
+    total_traffic = Column(BigInteger, default=0)
     
+    status = Column(String(20), default="active")
     is_admin = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    
+    last_activity = Column(DateTime, nullable=True)
     
     referrer_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     referral_bonus = Column(Float, default=0.0)
