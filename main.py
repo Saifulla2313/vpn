@@ -607,7 +607,8 @@ async def miniapp_subscription(request: Request):
                         
                         devices_info = await api.get_user_devices(user.remnawave_uuid)
                         if devices_info:
-                            devices = [{"name": d.get("name", "Device"), "hwid": d.get("hwid")} for d in devices_info]
+                            devices_list = devices_info.get('devices', [])
+                            devices = [{"name": d.get("name", d.get("userAgent", "Device")[:20] if d.get("userAgent") else "Device"), "hwid": d.get("hwid")} for d in devices_list]
                 except Exception as e:
                     logger.warning(f"Failed to fetch RemnaWave data: {e}")
             

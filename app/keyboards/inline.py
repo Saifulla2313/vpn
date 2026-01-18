@@ -8,7 +8,7 @@ def get_main_menu_keyboard(webapp_url: Optional[str] = None, user_id: Optional[i
     
     if webapp_url:
         buttons.append([
-            InlineKeyboardButton(text="📱 Открыть приложение", web_app=WebAppInfo(url=webapp_url))
+            InlineKeyboardButton(text="📱 ПОДКЛЮЧИТЬСЯ", web_app=WebAppInfo(url=webapp_url))
         ])
     
     buttons.extend([
