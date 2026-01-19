@@ -60,7 +60,18 @@ sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/
 docker-compose up -d
 ```
 
-### 6. Проверка статуса
+### 6. Настройка вебхука ЮКассы
+
+В личном кабинете ЮКассы укажите URL для уведомлений:
+```
+https://your-domain.com/webhook/yookassa
+```
+
+Выберите события:
+- `payment.succeeded` - успешный платёж
+- `payment.canceled` - отменённый платёж
+
+### 7. Проверка статуса
 
 ```bash
 docker-compose ps

@@ -34,6 +34,7 @@ from .routes import (
     transactions,
     users,
     logs,
+    webhooks,
 )
 
 
@@ -211,5 +212,6 @@ def create_web_api_app() -> FastAPI:
         prefix="/notifications/subscriptions",
         tags=["notifications"],
     )
+    app.include_router(webhooks.router)
 
     return app

@@ -21,6 +21,7 @@ from . import (
     transactions,
     users,
     logs,
+    webhooks,
 )
 
 __all__ = [
@@ -46,4 +47,5 @@ __all__ = [
     "transactions",
     "users",
     "logs",
+    "webhooks",
 ]
