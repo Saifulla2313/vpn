@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  vpn-bot:
+    build: .
+    container_name: vpn-bot
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-}
+      - REMNAWAVE_URL=${REMNAWAVE_URL}
+      - REMNAWAVE_API_KEY=${REMNAWAVE_API_KEY}
+      - REMNAWAVE_SECRET_KEY=${REMNAWAVE_SECRET_KEY:-}
+      - REMNAWAVE_DEFAULT_SQUAD_UUID=${REMNAWAVE_DEFAULT_SQUAD_UUID}
+      - YOOKASSA_SHOP_ID=${YOOKASSA_SHOP_ID}
+      - YOOKASSA_SECRET_KEY=${YOOKASSA_SECRET_KEY}
+      - YOOKASSA_RETURN_URL=${YOOKASSA_RETURN_URL:-}
+      - YOOKASSA_DEFAULT_RECEIPT_EMAIL=${YOOKASSA_DEFAULT_RECEIPT_EMAIL:-noreply@vpn.bot}
+      - YOOKASSA_VAT_CODE=${YOOKASSA_VAT_CODE:-1}
+      - YOOKASSA_PAYMENT_MODE=${YOOKASSA_PAYMENT_MODE:-full_payment}
+      - YOOKASSA_PAYMENT_SUBJECT=${YOOKASSA_PAYMENT_SUBJECT:-service}
+      - SUBSCRIPTION_DAILY_PRICE=${SUBSCRIPTION_DAILY_PRICE:-6.0}
+      - DEVICE_LIMIT_ENABLED=${DEVICE_LIMIT_ENABLED:-false}
+      - DEFAULT_DEVICE_LIMIT=${DEFAULT_DEVICE_LIMIT:-1}
+      - TRIAL_ENABLED=${TRIAL_ENABLED:-true}
+      - TRIAL_DAYS=${TRIAL_DAYS:-1}
+      - TRIAL_TRAFFIC_GB=${TRIAL_TRAFFIC_GB:-10}
+      - WEB_API_ENABLED=${WEB_API_ENABLED:-true}
+      - BOT_USERNAME=${BOT_USERNAME:-vpn_bot}
+      - DEFAULT_LANGUAGE=${DEFAULT_LANGUAGE:-ru}
+      - TIMEZONE=${TIMEZONE:-Europe/Moscow}
+    volumes:
+      - ./data:/app/data
+      - ./static:/app/static
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - vpn-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: vpn-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-vpnbot}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-vpnbot_password}
+      - POSTGRES_DB=${POSTGRES_DB:-vpnbot}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vpn-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: vpn-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - vpn-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: vpn-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./static:/var/www/static:ro
+    depends_on:
+      - vpn-bot
+    networks:
+      - vpn-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  vpn-network:
+    driver: bridge

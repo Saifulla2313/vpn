@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  vpn-bot:
+    build: .
+    container_name: vpn-bot
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://vpnbot:vpnbot_password@postgres:5432/vpnbot
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./data:/app/data
+      - ./static:/app/static
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - vpn-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: vpn-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=vpnbot
+      - POSTGRES_PASSWORD=vpnbot_password
+      - POSTGRES_DB=vpnbot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - vpn-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: vpn-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - vpn-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: vpn-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx-dev.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/var/www/static:ro
+    depends_on:
+      - vpn-bot
+    networks:
+      - vpn-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  vpn-network:
+    driver: bridge
