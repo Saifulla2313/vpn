@@ -88,6 +88,9 @@ class Settings:
     # Bot username for return URLs
     BOT_USERNAME: str = field(default_factory=lambda: os.getenv("BOT_USERNAME", "vpn_bot"))
     
+    # WebApp URL for miniapp
+    WEBAPP_URL: Optional[str] = field(default_factory=lambda: os.getenv("WEBAPP_URL"))
+    
     # Logo and branding
     LOGO_FILE: str = field(default_factory=lambda: os.getenv("LOGO_FILE", "assets/logo.png"))
     

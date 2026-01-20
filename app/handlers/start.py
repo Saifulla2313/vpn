@@ -15,6 +15,12 @@ router = Router()
 
 
 def get_webapp_url() -> str:
+    # First check for explicit WEBAPP_URL
+    webapp_url = settings.WEBAPP_URL
+    if webapp_url:
+        return webapp_url
+    
+    # Fallback to Replit domain
     domain = os.getenv("REPLIT_DEV_DOMAIN", "")
     if domain:
         return f"https://{domain}/miniapp"
