@@ -757,6 +757,11 @@
                 }
             }
 
+            @keyframes slideDown {
+                from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+
             @keyframes spin {
                 to {
                     transform: rotate(360deg);
@@ -771,7 +776,11 @@
 
         <div class="container">
             <header class="header">
-                <img src="/static/miniapp/logo.png" alt="V+ VPN" style="max-width: 300px; height: auto;">
+                <img
+                    src="/static/miniapp/logo.png"
+                    alt="V+ VPN"
+                    style="max-width: 300px; height: auto"
+                />
             </header>
 
             <section class="balance-card" id="balance-section">
@@ -884,18 +893,34 @@
                             <div class="step-number">1</div>
                             <div class="step-content">
                                 <h4>Скачайте приложение</h4>
-                                <p>Установите клиент для вашего устройства</p>
+                                <p>
+                                    Установите приложение
+                                    <b style="color: white">Happ Proxy</b> для
+                                    вашего устройства
+                                </p>
                                 <div class="app-buttons">
-                                    <a href="#" class="app-btn" id="app-ios"
+                                    <a
+                                        href="https://apps.apple.com/app/id6746188973"
+                                        class="app-btn"
+                                        id="app-ios"
                                         >iOS</a
                                     >
-                                    <a href="#" class="app-btn" id="app-android"
+                                    <a
+                                        href="https://play.google.com/store/apps/details?id=com.happproxy"
+                                        class="app-btn"
+                                        id="app-android"
                                         >Android</a
                                     >
-                                    <a href="#" class="app-btn" id="app-windows"
+                                    <a
+                                        href="https://github.com/Happ-proxy/happ-desktop/releases/latest/download/setup-Happ.x64.exe"
+                                        class="app-btn"
+                                        id="app-windows"
                                         >Windows</a
                                     >
-                                    <a href="#" class="app-btn" id="app-macos"
+                                    <a
+                                        href="https://apps.apple.com/ru/app/v2box-v2ray-client/id6446814690"
+                                        class="app-btn"
+                                        id="app-macos"
                                         >macOS</a
                                     >
                                 </div>
@@ -940,6 +965,15 @@
                                         margin-top: 12px;
                                     "
                                 />
+                            </div>
+                        </div>
+                        <div class="setup-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h4>Выберите сервер</h4>
+                                <p>
+                                    Выбираете сервер с названием вашего оператора и подключаетесь
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -1073,6 +1107,9 @@
                 document.getElementById("loading").classList.add("hidden");
             });
 
+            let balancePollingInterval = null;
+            let lastKnownBalance = null;
+
             async function loadUserData() {
                 if (!tg?.initData) {
                     console.log("No Telegram init data");
@@ -1088,11 +1125,52 @@
 
                     if (response.ok) {
                         userData = await response.json();
+                        const newBalance = userData.user?.balance_kopeks;
+                        if (lastKnownBalance !== null && newBalance > lastKnownBalance) {
+                            showBalanceUpdate(newBalance - lastKnownBalance);
+                        }
+                        lastKnownBalance = newBalance;
                         updateUI();
                     }
                 } catch (error) {
                     console.error("Failed to load user data:", error);
                 }
+            }
+
+            function startBalancePolling() {
+                if (balancePollingInterval) return;
+                balancePollingInterval = setInterval(loadUserData, 3000);
+                setTimeout(stopBalancePolling, 120000);
+            }
+
+            function stopBalancePolling() {
+                if (balancePollingInterval) {
+                    clearInterval(balancePollingInterval);
+                    balancePollingInterval = null;
+                }
+            }
+
+            function showBalanceUpdate(amountKopeks) {
+                const rubles = Math.floor(amountKopeks / 100);
+                const notification = document.createElement('div');
+                notification.className = 'balance-notification';
+                notification.innerHTML = `<span>+${rubles} ₽</span>`;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: var(--accent);
+                    color: #000;
+                    padding: 12px 24px;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    font-size: 18px;
+                    z-index: 9999;
+                    animation: slideDown 0.3s ease;
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
             }
 
             function updateUI() {
@@ -1113,18 +1191,27 @@
 
                 const devicesList = document.getElementById("devices-list");
                 if (userData.devices && userData.devices.length > 0) {
-                    devicesList.innerHTML = userData.devices.map(device => {
-                        const platformIcons = {
-                            'Android': '<path d="M17 2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H7V4h10v16z"/>',
-                            'iOS': '<path d="M15.5 1h-8A2.5 2.5 0 005 3.5v17A2.5 2.5 0 007.5 23h8a2.5 2.5 0 002.5-2.5v-17A2.5 2.5 0 0015.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"/>',
-                            'Windows': '<path d="M3 12V6.5l7-1v6.5H3zm0 .5h7v6.5l-7-1V12.5zM10.5 5l9.5-1.5v9h-9.5V5zm0 7.5h9.5v9L10.5 20v-7.5z"/>',
-                            'macOS': '<path d="M4 4h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 14v2m-4 0h8"/>',
-                            'Linux': '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>'
-                        };
-                        const icon = platformIcons[device.platform] || '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>';
-                        const lastSeen = device.last_seen ? new Date(device.last_seen).toLocaleDateString('ru-RU') : '';
-                        
-                        return `
+                    devicesList.innerHTML = userData.devices
+                        .map((device) => {
+                            const platformIcons = {
+                                Android:
+                                    '<path d="M17 2H7c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H7V4h10v16z"/>',
+                                iOS: '<path d="M15.5 1h-8A2.5 2.5 0 005 3.5v17A2.5 2.5 0 007.5 23h8a2.5 2.5 0 002.5-2.5v-17A2.5 2.5 0 0015.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"/>',
+                                Windows:
+                                    '<path d="M3 12V6.5l7-1v6.5H3zm0 .5h7v6.5l-7-1V12.5zM10.5 5l9.5-1.5v9h-9.5V5zm0 7.5h9.5v9L10.5 20v-7.5z"/>',
+                                macOS: '<path d="M4 4h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 14v2m-4 0h8"/>',
+                                Linux: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>',
+                            };
+                            const icon =
+                                platformIcons[device.platform] ||
+                                '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>';
+                            const lastSeen = device.last_seen
+                                ? new Date(device.last_seen).toLocaleDateString(
+                                      "ru-RU",
+                                  )
+                                : "";
+
+                            return `
                             <div class="device-item" data-hwid="${device.hwid}">
                                 <div class="device-info">
                                     <div class="device-icon">
@@ -1132,15 +1219,17 @@
                                     </div>
                                     <div>
                                         <div class="device-name">${device.platform}</div>
-                                        <div class="device-date">${lastSeen ? 'Последний вход: ' + lastSeen : (device.ip || '')}</div>
+                                        <div class="device-date">${lastSeen ? "Последний вход: " + lastSeen : device.ip || ""}</div>
                                     </div>
                                 </div>
                                 <button class="device-remove" onclick="deleteDevice('${device.hwid}')">Удалить</button>
                             </div>
                         `;
-                    }).join('');
+                        })
+                        .join("");
                 } else {
-                    devicesList.innerHTML = '<div class="empty-state"><p>У вас пока нет подключенных устройств</p></div>';
+                    devicesList.innerHTML =
+                        '<div class="empty-state"><p>У вас пока нет подключенных устройств</p></div>';
                 }
 
                 const tariffEl = document.getElementById("tariff-text");
@@ -1167,33 +1256,40 @@
             }
 
             async function deleteDevice(hwid) {
-                if (!confirm('Удалить это устройство?')) return;
-                
+                if (!confirm("Удалить это устройство?")) return;
+
                 const telegramId = userData?.user?.telegram_id;
                 if (!telegramId) {
-                    alert('Ошибка: не удалось определить пользователя');
+                    alert("Ошибка: не удалось определить пользователя");
                     return;
                 }
-                
+
                 try {
-                    const response = await fetch(`/api/devices/${telegramId}/${hwid}`, {
-                        method: 'DELETE'
-                    });
-                    
+                    const response = await fetch(
+                        `/api/devices/${telegramId}/${hwid}`,
+                        {
+                            method: "DELETE",
+                        },
+                    );
+
                     if (response.ok) {
-                        userData.devices = userData.devices.filter(d => d.hwid !== hwid);
+                        userData.devices = userData.devices.filter(
+                            (d) => d.hwid !== hwid,
+                        );
                         updateUI();
-                        
+
                         if (window.Telegram?.WebApp) {
-                            window.Telegram.WebApp.showAlert('Устройство удалено');
+                            window.Telegram.WebApp.showAlert(
+                                "Устройство удалено",
+                            );
                         }
                     } else {
                         const error = await response.json();
-                        alert(error.error || 'Ошибка удаления устройства');
+                        alert(error.error || "Ошибка удаления устройства");
                     }
                 } catch (e) {
-                    console.error('Delete device error:', e);
-                    alert('Ошибка удаления устройства');
+                    console.error("Delete device error:", e);
+                    alert("Ошибка удаления устройства");
                 }
             }
 
@@ -1307,6 +1403,11 @@
                     return;
                 }
 
+                const payBtn = document.getElementById("pay-btn");
+                const originalText = payBtn.innerHTML;
+                payBtn.disabled = true;
+                payBtn.innerHTML = "Загрузка...";
+
                 try {
                     const response = await fetch("/miniapp/payments/create", {
                         method: "POST",
@@ -1318,17 +1419,25 @@
                         }),
                     });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.payment_url) {
-                            window.open(data.payment_url, "_blank");
+                    const data = await response.json();
+                    
+                    if (response.ok && data.payment_url) {
+                        startBalancePolling();
+                        closeModal("topup-modal");
+                        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+                            window.Telegram.WebApp.openLink(data.payment_url);
+                        } else {
+                            window.location.href = data.payment_url;
                         }
                     } else {
-                        alert("Ошибка создания платежа");
+                        alert(data.error || "Ошибка создания платежа");
                     }
                 } catch (error) {
                     console.error("Payment error:", error);
-                    alert("Ошибка оплаты");
+                    alert("Ошибка сети");
+                } finally {
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = originalText;
                 }
             }
 

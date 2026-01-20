@@ -47,6 +47,38 @@ async def cmd_start(message: Message, db: AsyncSession):
             referrer_id=referrer_id
         )
         logger.info(f"New user registered: {telegram_id}")
+        
+        from app.database.crud.user import update_user_balance
+        from app.remnawave_api import RemnaWaveAPI
+        from datetime import datetime, timedelta
+        
+        WELCOME_BONUS = 50.0
+        await update_user_balance(db, user.id, WELCOME_BONUS)
+        logger.info(f"Added welcome bonus {WELCOME_BONUS}₽ to user {telegram_id}")
+        
+        try:
+            async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
+                expire_at = datetime.utcnow() + timedelta(days=1)
+                
+                active_squads = None
+                if settings.REMNAWAVE_DEFAULT_SQUAD_UUID:
+                    active_squads = [settings.REMNAWAVE_DEFAULT_SQUAD_UUID]
+                
+                remnawave_user = await api.create_user(
+                    telegram_id=telegram_id,
+                    username=message.from_user.username or f"user_{telegram_id}",
+                    expire_at=expire_at,
+                    traffic_limit_bytes=0,
+                    hwid_device_limit=settings.DEFAULT_DEVICE_LIMIT,
+                    active_internal_squads=active_squads
+                )
+                
+                if remnawave_user:
+                    user.remnawave_uuid = remnawave_user.uuid
+                    await db.commit()
+                    logger.info(f"Subscription created for new user {telegram_id}, balance: {WELCOME_BONUS}₽")
+        except Exception as e:
+            logger.error(f"Failed to create subscription for user {telegram_id}: {e}")
     
     webapp_url = get_webapp_url()
     

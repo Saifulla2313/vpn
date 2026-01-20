@@ -41,6 +41,8 @@ class Settings:
     
     # Subscription pricing (rubles per day per device)
     SUBSCRIPTION_DAILY_PRICE: float = field(default_factory=lambda: float(os.getenv("SUBSCRIPTION_DAILY_PRICE", "6.0")))
+    # Daily billing time (HH:MM format, UTC)
+    DAILY_BILLING_TIME: str = field(default_factory=lambda: os.getenv("DAILY_BILLING_TIME", "00:05"))
     # Device limit: 0 = unlimited
     DEVICE_LIMIT_ENABLED: bool = field(default_factory=lambda: os.getenv("DEVICE_LIMIT_ENABLED", "false").lower() == "true")
     

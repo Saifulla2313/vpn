@@ -120,13 +120,18 @@ async def stop_bot():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from app.services.daily_billing_service import daily_billing_service
+    
     await init_db()
     logger.info("Database initialized")
     
     bot_task = asyncio.create_task(start_bot())
+    await daily_billing_service.initialize()
+    logger.info("Daily billing service initialized")
     
     yield
     
+    await daily_billing_service.stop()
     await stop_bot()
     bot_task.cancel()
     try:
@@ -181,6 +186,12 @@ async def health():
 @app.get("/miniapp", response_class=HTMLResponse)
 async def miniapp():
     with open("static/miniapp/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
+@app.get("/miniapp/success", response_class=HTMLResponse)
+async def miniapp_success():
+    with open("static/miniapp/success.html", "r", encoding="utf-8") as f:
         return f.read()
 
 
@@ -252,13 +263,14 @@ async def get_user_api(telegram_id: int):
 
 
 @app.post("/api/webhook/yookassa")
+@app.post("/webhook/yookassa")
 async def yookassa_webhook(request: Request):
     from app.database.crud.user import get_user_by_id, update_user_balance
     from app.database.crud.transaction import get_transaction_by_payment_id, complete_transaction
     from app.database.crud.subscription import get_subscription_by_user_id, activate_subscription
     from app.database.models import SubscriptionStatus
     from app.remnawave_api import RemnaWaveAPI
-    from datetime import timedelta
+    from datetime import datetime, timedelta
     
     try:
         data = await request.json()
@@ -285,66 +297,16 @@ async def yookassa_webhook(request: Request):
             await complete_transaction(db, transaction.id)
             user = await update_user_balance(db, transaction.user_id, transaction.amount)
             
-            days_added = 0
-            if user and user.remnawave_uuid and user.balance > 0:
-                try:
-                    async with RemnaWaveAPI(base_url=settings.REMNAWAVE_URL, api_key=settings.REMNAWAVE_API_KEY) as api:
-                        remnawave_user = await api.get_user_by_uuid(user.remnawave_uuid)
-                        if remnawave_user:
-                            device_count = remnawave_user.hwid_device_limit or 1
-                            daily_price = settings.SUBSCRIPTION_DAILY_PRICE * device_count
-                            
-                            days_to_add = int(user.balance // daily_price)
-                            if days_to_add > 0:
-                                cost = days_to_add * daily_price
-                                
-                                current_expire = remnawave_user.expire_at
-                                now = datetime.utcnow()
-                                if current_expire and current_expire.tzinfo:
-                                    current_expire = current_expire.replace(tzinfo=None)
-                                
-                                if current_expire and current_expire > now:
-                                    new_expire = current_expire + timedelta(days=days_to_add)
-                                else:
-                                    new_expire = now + timedelta(days=days_to_add)
-                                
-                                await api.update_user(
-                                    uuid=user.remnawave_uuid,
-                                    expire_at=new_expire
-                                )
-                                
-                                await update_user_balance(db, user.id, -cost)
-                                days_added = days_to_add
-                                logger.info(f"Extended subscription for user {user.telegram_id}: +{days_to_add} days, -{cost}₽")
-                                
-                                subscription = await get_subscription_by_user_id(db, user.id)
-                                if subscription and subscription.status == SubscriptionStatus.TRIAL:
-                                    subscription.status = SubscriptionStatus.ACTIVE
-                                    await db.commit()
-                                    logger.info(f"Changed subscription status from TRIAL to ACTIVE for user {user.telegram_id}")
-                except Exception as e:
-                    logger.error(f"Failed to auto-extend subscription: {e}")
-            
-            if user and not user.remnawave_uuid:
-                subscription = await get_subscription_by_user_id(db, user.id)
-                if subscription and subscription.status != SubscriptionStatus.ACTIVE:
-                    if user.balance >= settings.SUBSCRIPTION_DAILY_PRICE:
-                        days = int(user.balance // settings.SUBSCRIPTION_DAILY_PRICE)
-                        await activate_subscription(db, user.id, days)
+            logger.info(f"Balance updated for user {user.telegram_id if user else 'unknown'}: +{transaction.amount}₽")
             
             if user and bot:
                 try:
-                    if days_added > 0:
-                        await bot.send_message(
-                            user.telegram_id,
-                            f"✅ Оплата {transaction.amount}₽ получена!\n"
-                            f"Подписка продлена на {days_added} дней"
-                        )
-                    else:
-                        await bot.send_message(
-                            user.telegram_id,
-                            f"✅ Оплата {transaction.amount}₽ получена!\nВаш баланс: {user.balance}₽"
-                        )
+                    await bot.send_message(
+                        user.telegram_id,
+                        f"✅ Оплата {transaction.amount}₽ получена!\n"
+                        f"Ваш баланс: {user.balance}₽\n\n"
+                        f"Списание происходит ежедневно в зависимости от количества устройств."
+                    )
                 except Exception as e:
                     logger.error(f"Failed to notify user: {e}")
         
@@ -708,14 +670,16 @@ async def miniapp_create_payment(request: Request):
             Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
             
             idempotence_key = str(uuid4())
-            return_url = settings.YOOKASSA_RETURN_URL or f"https://t.me/plus_vpnn_bot"
+            host = request.headers.get("host", "")
+            scheme = "https" if "replit" in host else request.url.scheme
+            return_url = f"{scheme}://{host}/miniapp/success"
             
             from app.database.models import Transaction, TransactionType, PaymentMethod
             transaction = Transaction(
                 user_id=user.id,
                 amount=amount_rubles,
-                type=TransactionType.deposit,
-                payment_method=PaymentMethod.yookassa,
+                type=TransactionType.DEPOSIT,
+                payment_method=PaymentMethod.YOOKASSA,
                 status="pending",
                 description=f"Пополнение баланса - {amount_rubles}₽"
             )
@@ -749,7 +713,7 @@ async def miniapp_create_payment(request: Request):
             try:
                 payment = YooPayment.create(payment_data, idempotence_key)
                 
-                transaction.external_id = payment.id
+                transaction.payment_id = payment.id
                 await db.commit()
                 
                 return {

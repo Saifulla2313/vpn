@@ -38,3 +38,4 @@ externalPort = 80
 
 [userenv.shared]
 REMNAWAVE_DEFAULT_SQUAD_UUID = "c264496d-1c24-4b76-84ff-5b19c5b44da6"
+YOOKASSA_RETURN_URL = "https://c42fe997-cc5e-4ce6-bfad-5bcdadba5a3c-00-3tmz15d4172jr.pike.replit.dev/miniapp/success"

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>Оплата успешна - VPN PLUS</title>
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <style>
+            :root {
+                --bg-primary: #000000;
+                --bg-card: #1c1c1e;
+                --text-primary: #ffffff;
+                --text-secondary: #8e8e93;
+                --accent: #a3e635;
+            }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                text-align: center;
+            }
+            .success-icon {
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                background: var(--accent);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 24px;
+                animation: pulse 2s ease-in-out infinite;
+            }
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.4); }
+                50% { transform: scale(1.05); box-shadow: 0 0 30px 10px rgba(163, 230, 53, 0.2); }
+            }
+            .success-icon svg {
+                width: 50px;
+                height: 50px;
+                fill: #000;
+            }
+            h1 {
+                font-size: 28px;
+                font-weight: 600;
+                margin-bottom: 12px;
+            }
+            .message {
+                color: var(--text-secondary);
+                font-size: 16px;
+                margin-bottom: 32px;
+                line-height: 1.5;
+            }
+            .balance-card {
+                background: var(--bg-card);
+                border-radius: 16px;
+                padding: 24px 40px;
+                margin-bottom: 32px;
+            }
+            .balance-label {
+                color: var(--text-secondary);
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+            .balance-value {
+                font-size: 42px;
+                font-weight: 300;
+                color: var(--accent);
+            }
+            .balance-currency {
+                font-size: 20px;
+                color: var(--text-secondary);
+            }
+            .back-btn {
+                background: var(--accent);
+                color: #000;
+                border: none;
+                padding: 16px 48px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: transform 0.2s, opacity 0.2s;
+            }
+            .back-btn:active {
+                transform: scale(0.98);
+                opacity: 0.9;
+            }
+            .loading {
+                color: var(--text-secondary);
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="success-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+        </div>
+        <h1>Оплата прошла успешно!</h1>
+        <p class="message">Ваш баланс пополнен</p>
+        <div class="balance-card">
+            <div class="balance-label">Текущий баланс</div>
+            <div id="balance">
+                <span class="loading">Загрузка...</span>
+            </div>
+        </div>
+        <button class="back-btn" onclick="goBack()">Вернуться в приложение</button>
+        
+        <script>
+            const tg = window.Telegram?.WebApp;
+            let telegramId = null;
+            
+            if (tg) {
+                tg.ready();
+                tg.expand();
+                telegramId = tg.initDataUnsafe?.user?.id;
+            }
+            
+            async function loadBalance() {
+                if (!telegramId) {
+                    document.getElementById('balance').innerHTML = '<span class="balance-value">—</span>';
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/miniapp/subscription', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ telegram_id: telegramId })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.balance !== undefined) {
+                        document.getElementById('balance').innerHTML = 
+                            `<span class="balance-value">${data.balance}</span><span class="balance-currency"> ₽</span>`;
+                    }
+                } catch (e) {
+                    document.getElementById('balance').innerHTML = '<span class="balance-value">—</span>';
+                }
+            }
+            
+            function goBack() {
+                if (tg) {
+                    tg.close();
+                } else {
+                    window.location.href = '/miniapp';
+                }
+            }
+            
+            loadBalance();
+        </script>
+    </body>
+</html>
