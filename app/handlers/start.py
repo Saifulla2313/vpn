@@ -81,8 +81,9 @@ async def cmd_start(message: Message, db: AsyncSession):
                 
                 if remnawave_user:
                     user.remnawave_uuid = remnawave_user.uuid
+                    user.remnawave_short_uuid = remnawave_user.short_uuid
                     await db.commit()
-                    logger.info(f"Subscription created for new user {telegram_id}, balance: {WELCOME_BONUS}₽")
+                    logger.info(f"Subscription created for new user {telegram_id}, uuid: {remnawave_user.short_uuid}, balance: {WELCOME_BONUS}₽")
         except Exception as e:
             logger.error(f"Failed to create subscription for user {telegram_id}: {e}")
     
