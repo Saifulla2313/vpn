@@ -1387,6 +1387,18 @@
                 document
                     .getElementById("share-btn")
                     .addEventListener("click", shareReferralLink);
+                
+                // Обработчик ссылки на поддержку
+                document
+                    .getElementById("contact-link")
+                    .addEventListener("click", (e) => {
+                        e.preventDefault();
+                        if (tg) {
+                            tg.openTelegramLink("https://t.me/plus_vpnn_bot");
+                        } else {
+                            window.open("https://t.me/plus_vpnn_bot", "_blank");
+                        }
+                    });
             }
 
             function openModal(id) {
